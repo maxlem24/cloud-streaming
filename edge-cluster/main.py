@@ -5,7 +5,7 @@ from paho.mqtt import client as mqtt_client
 # MQTT Configuration
 BROKER = '10.207.130.234'
 PORT = 1883
-TOPIC = "/python/mqtt"
+TOPIC = "test/topic"
 CLIENT_ID = f'python-mqtt-{random.randint(0, 1000)}'
 
 
@@ -40,7 +40,7 @@ def publish(client, topic, message):
             print(f"Failed to send message to topic {TOPIC}")
         msg_count += 1
         
-        
+
 def subscribe(client: mqtt_client, topic: str):
     def on_message(client, userdata, msg):
         print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
@@ -52,10 +52,10 @@ def subscribe(client: mqtt_client, topic: str):
 def run():
     """Main function to run MQTT client"""
     client = connect_mqtt()
-    client.loop_forever()
     
     subscribe(client, "test/topic")
-    publish(client)
+    publish(client,"test/topic","AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    client.loop_forever()
 
 
 if __name__ == '__main__':
