@@ -64,9 +64,10 @@ def run():
     # on reçoi : user, password, ID
     
     client = connect_mqtt()
+    subscribe(client, f"auth/user/")
     client.loop_forever()
     
-    subscribe(client, f"auth/user/")
+    
     
 
 
