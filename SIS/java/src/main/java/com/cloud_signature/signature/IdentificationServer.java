@@ -1,5 +1,7 @@
 package com.cloud_signature.signature;
 
+import java.security.NoSuchAlgorithmException;
+
 import com.cloud_signature.Globals;
 
 import it.unisa.dia.gas.jpbc.Element;
@@ -13,8 +15,9 @@ public class IdentificationServer {
         this.pk_s = Globals.p.duplicate().mulZn(ts);
     }
 
-    public KeyPair verify_identity(byte[] id_w) {
-        Element s_sw = Globals.pairing.getG1().newElementFromHash(id_w, 0, id_w.length).mulZn(this.ts);
+    public KeyPair verify_identity(byte[] id_w) throws NoSuchAlgorithmException {
+        Element h1_id_w = Globals.h1(id_w);
+        Element s_sw = h1_id_w.mulZn(ts);
         return new KeyPair(s_sw, pk_s);
     }
 

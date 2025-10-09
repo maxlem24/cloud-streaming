@@ -10,7 +10,7 @@ public class Sign_params {
     private Element r;
     private SimpleMatrix v;
 
-    public Sign_params(Gen_seed paramsA, Element r, SimpleMatrix v) {
+    public Sign_params(SimpleMatrix v, Gen_seed paramsA, Element r) {
         // assert v.getNumRows() == size_l;
         // assert v.getNumCols() == size_n;
         this.paramsA = paramsA;
@@ -32,6 +32,6 @@ public class Sign_params {
 
     @Override
     public String toString() {
-        return String.format("%s|%s|%s", v ,paramsA,r); 
+        return String.format("%s|%s|%s", v, paramsA, r);
     }
 }
