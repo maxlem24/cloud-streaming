@@ -1,42 +1,62 @@
 package com.cloud_signature.signature;
 
+import java.security.NoSuchAlgorithmException;
+
+import org.ejml.simple.SimpleMatrix;
+
+import com.cloud_signature.Globals;
+
+import it.unisa.dia.gas.jpbc.Element;
+import it.unisa.dia.gas.jpbc.Pairing;
+
 public class Client {
-    
+    private byte[] id_c;
+
+    public Client(byte[] id_c) {
+        this.id_c = id_c;
+    }
+
+    public boolean verify_signature(Signed_Data signed_data) throws NoSuchAlgorithmException {
+        SimpleMatrix v_prime = Globals.getV(signed_data.getParamA(), signed_data.getData());
+
+        Pairing pairing = Globals.pairing;
+        Element p = Globals.p.duplicate();
+
+        Element pk_prime = signed_data.getPk_v().duplicate();
+        Element r_prime_left = pairing.pairing(signed_data.getSign().getW_2().duplicate(), p.duplicate());
+        Element r_prime_right = pairing
+                .pairing(Globals.h1(signed_data.getId_w()), pk_prime.negate())
+                .mulZn(signed_data.getSign().getW_1());
+        Element r_prime = r_prime_left.mul(r_prime_right);
+
+        Sign_params params = new Sign_params(v_prime, signed_data.getParamA(), r_prime);
+        byte[] params_bytes = params.toString().getBytes();
+
+        Element w_1_prime = Globals.h2(params_bytes);
+        return w_1_prime.isEqual(signed_data.getSign().getW_1());
+    }
+
+    public boolean verify_signature(Signed_Data_Delegated signed_data) throws NoSuchAlgorithmException {
+        SimpleMatrix v_prime = Globals.getV(signed_data.getParamA(), signed_data.getData());
+
+        Pairing pairing = Globals.pairing;
+        Element p = Globals.p.duplicate();
+
+        Element pk_prime = signed_data.getPk_v().duplicate();
+        Element r_prime_left = pairing.pairing(signed_data.getSign().getW_2().duplicate(), p.duplicate());
+        Element r_prime_right = pairing
+                .pairing(Globals.h1(signed_data.getId_w()), pk_prime.negate())
+                .mulZn(signed_data.getSign().getW_1());
+        Element r_prime_up = r_prime_left.mul(r_prime_right);
+        Element r_prime_down = pairing.pairing(signed_data.getPk_d(), Globals.h1(signed_data.getId_d()))
+                .mulZn(signed_data.getSign().getW_1());
+
+        Element r_prime = r_prime_up.div(r_prime_down);
+
+        Sign_params params = new Sign_params(v_prime, signed_data.getParamA(), r_prime);
+        byte[] params_bytes = params.toString().getBytes();
+
+        Element w_1_prime = Globals.h2(params_bytes);
+        return w_1_prime.isEqual(signed_data.getSign().getW_1());
+    }
 }
-
-// fn integrity_check(
-//     param_a: [i64; 3],
-//     id_w: i64,
-//     v: i64,
-//     sign: [i64; 2],
-//     index: i64,
-//     d_i: i64,
-//     pk_v: i64,
-// ) {
-//     // x_prime_i = [for j in 0...m (h3(d_i)]
-//     // A = for i in 0...l( for j in 0...m(generator.next()))
-
-//     // v_prime_i = (A * x_prime_i) % q
-
-//     // v_prime = for i in 0...n ( if i == index {v_prime_i} else {v[i]})
-
-//     // pk_prime = pk_v + pk_s
-
-//     // r_prime = e(w2,P).e(h1(id_w),−pk_prime)**w1
-
-//     // if h2(v_prime,param_a,r_prime) == w_1 { return true}
-// }
-
-
-// fn connect_stream( streamer: String) {
-//     // Get Zone of streamer from auth Server
-
-
-//     /* while connected { 
-//         data, secuity_params = askFog()
-//         if integrity_check(security_params){
-//             show data
-//         }
-//     } */
-    
-// }

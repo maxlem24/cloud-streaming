@@ -25,45 +25,16 @@ public class Owner {
         this.keys.add(new_keys);
     }
 
+    public DelegationKeyPair create_delegation(byte[] id_d) throws NoSuchAlgorithmException {
+        Element y = Globals.pairing.getZr().newRandomElement();
+        Element pk_d = Globals.p.duplicate().mulZn(y);
+        Element dk_d = keys.getS_w().duplicate().add(Globals.h1(id_d).mulZn(y));
+        return new DelegationKeyPair(dk_d, pk_d);
+    }
+
     public Signed_Data share_data(byte[] data) throws NoSuchAlgorithmException {
-        int l = Globals.size_l;
-        int m = Globals.size_m;
-        int n = Globals.size_n;
-        SimpleMatrix a = new SimpleMatrix(l, m);
-        Gen_seed seed = new Gen_seed(15, 2, 4);
-        PRNG gen = new PRNG(seed, Globals.q);
-        for (int i = 0; i < Globals.size_l; i++) {
-            for (int j = 0; j < m; j++) {
-                a.set(i, j, gen.getNext());
-            }
-        }
-        SimpleMatrix x = new SimpleMatrix(m, n);
-        int data_block_size = data.length / n;
-
-        int hash_size = 512;
-        for (int i = 0; i < n; i++) {
-            byte[] d_i = new byte[data_block_size];
-            for (int bit_i = 0; bit_i < data_block_size; bit_i++) {
-                d_i[bit_i] = data[i * data_block_size + bit_i];
-            }
-            byte[] h_i = Globals.h3(d_i);
-            BigInteger no = new BigInteger(1, h_i);
-            String hashtext = no.toString(2);
-
-            while (hashtext.length() < hash_size) {
-                hashtext = "0" + hashtext;
-            }
-            byte[] hash_byte = hashtext.getBytes();
-            for (int j = 0; j < m; j++) {
-                x.set(j, i, hash_byte[j % hash_size] == '0' ? 0 : 1);
-            }
-        }
-        SimpleMatrix v = a.mult(x);
-        for (int i = 0; i < v.getNumRows(); i++) {
-            for (int j = 0; j < v.getNumCols(); j++) {
-                v.set(i, j, v.get(i, j) % Globals.q);
-            }
-        }
+        Gen_seed seed = new Gen_seed();
+        SimpleMatrix v = Globals.getV(seed, data);
 
         Pairing pairing = Globals.pairing;
         Element p = Globals.p.duplicate();
@@ -82,6 +53,11 @@ public class Owner {
 
     }
 
-    
+    public byte[] getId_w() {
+        return id_w;
+    }
 
+    public Element getP_k() {
+        return keys.getP_k();
+    }
 }

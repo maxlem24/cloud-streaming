@@ -12,54 +12,25 @@ import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 
 public class Fog {
+    private byte[] id_d;
     private Element pk_s;
+    private DelegationKeyPair delegated_keys;
+    private Owner delegatedOwner;
 
-    public Fog(IdentificationServer server) {
+    public Fog(IdentificationServer server, byte[] id_d) {
+        this.id_d = id_d;
         this.pk_s = server.getPk_s();
+        this.delegated_keys = null;
+        this.delegatedOwner = null;
+    }
+
+    public void getDelegatedKeys(Owner owner) throws NoSuchAlgorithmException {
+        this.delegated_keys = owner.create_delegation(id_d);
+        this.delegatedOwner = owner;
     }
 
     public boolean verify_signature(Signed_Data signed_data) throws NoSuchAlgorithmException {
-        int l = Globals.size_l;
-        int m = Globals.size_m;
-        int n = Globals.size_n;
-        SimpleMatrix a = new SimpleMatrix(l, m);
-        PRNG gen = new PRNG(signed_data.getParamA(), Globals.q);
-        for (int i = 0; i < Globals.size_l; i++) {
-            for (int j = 0; j < m; j++) {
-                a.set(i, j, gen.getNext());
-            }
-        }
-
-        byte[] data = signed_data.getData();
-        SimpleMatrix x_prime = new SimpleMatrix(m, n);
-        int data_block_size = data.length / n;
-
-        int hash_size = 512;
-        for (int i = 0; i < n; i++) {
-            byte[] d_i = new byte[data_block_size];
-            for (int bit_i = 0; bit_i < data_block_size; bit_i++) {
-                d_i[bit_i] = data[i * data_block_size + bit_i];
-            }
-            byte[] h_i = Globals.h3(d_i);
-            BigInteger no = new BigInteger(1, h_i);
-            String hashtext = no.toString(2);
-
-            while (hashtext.length() < hash_size) {
-                hashtext = "0" + hashtext;
-            }
-
-            byte[] hash_byte = hashtext.getBytes();
-            for (int j = 0; j < m; j++) {
-                x_prime.set(j, i, hash_byte[j % hash_size] == '0' ? 0 : 1);
-            }
-        }
-
-        SimpleMatrix v_prime = a.mult(x_prime);
-        for (int i = 0; i < v_prime.getNumRows(); i++) {
-            for (int j = 0; j < v_prime.getNumCols(); j++) {
-                v_prime.set(i, j, v_prime.get(i, j) % Globals.q);
-            }
-        }
+        SimpleMatrix v_prime = Globals.getV(signed_data.getParamA(), signed_data.getData());
 
         Pairing pairing = Globals.pairing;
         Element p = Globals.p.duplicate();
@@ -76,6 +47,30 @@ public class Fog {
 
         Element w_1_prime = Globals.h2(params_bytes);
         return w_1_prime.isEqual(signed_data.getSign().getW_1());
+    }
+
+    public Signed_Data_Delegated delegated_sign(byte[] data) throws NoSuchAlgorithmException, NoDelegationException {
+        if (delegated_keys == null || delegatedOwner == null) {
+            throw new NoDelegationException();
+        }
+        Gen_seed seed = new Gen_seed();
+        SimpleMatrix v = Globals.getV(seed, data);
+
+        Pairing pairing = Globals.pairing;
+        Element p = Globals.p.duplicate();
+
+        Element p_1 = pairing.getG1().newRandomElement();
+        Element k = pairing.getZr().newRandomElement();
+
+        Element r = pairing.pairing(p, p_1).mulZn(k);
+        Sign_params params = new Sign_params(v, seed, r);
+        byte[] params_bytes = params.toString().getBytes();
+        Element w_1 = Globals.h2(params_bytes);
+        Element w_2 = delegated_keys.getDk_d().duplicate().mulZn(w_1).add(p_1.duplicate().mulZn(k));
+
+        Signature sign = new Signature(w_1, w_2);
+        return new Signed_Data_Delegated(seed, delegatedOwner.getId_w(), v, sign, data, delegatedOwner.getP_k(), id_d,
+                delegated_keys.getPk_d());
     }
 
 }
