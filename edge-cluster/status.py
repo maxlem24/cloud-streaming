@@ -11,8 +11,7 @@ Publish video/request/ping
 
 l'edge cluster doit répondre dans:
 Send data to topic video/request/ping/ID
-whith ID the id of the edge cluster
-
+with ID the id of the edge cluster
 """
 
 
@@ -30,7 +29,7 @@ BROKER = '10.207.130.234'
 PORT = 1883
 TOPIC = "/python/mqtt"
 CLIENT_ID = f'python-mqtt-{random.randint(0, 1000)}'
-EDGE_CLUSTER_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
+EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 
 def get_system_status():
     """
@@ -63,7 +62,7 @@ def get_system_status():
         timestamp = datetime.datetime.now().isoformat()
         
         status_data = {
-            "edge_cluster_id": EDGE_CLUSTER_ID,
+            "edge_id": EDGE_ID,
             "cpu_usage_percent": cpu_usage,
             "memory_usage": memory_usage,
             "disk_usage": disk_info,
@@ -75,7 +74,7 @@ def get_system_status():
         
     except Exception as e:
         return {
-            "edge_cluster_id": EDGE_CLUSTER_ID,
+            "edge_id": EDGE_ID,
             "error": str(e),
             "timestamp": datetime.datetime.now().isoformat(),
             "status": "error"
@@ -97,9 +96,9 @@ def save_status_to_json(status_data, filename="edge_status.json"):
 def publish_status(client, status_data):
     """
     Publish status data to the correct MQTT topic
-    Topic format: video/request/ping/{EDGE_CLUSTER_ID}
+    Topic format: video/request/ping/{EDGE_ID}
     """
-    topic = f"video/request/ping/{EDGE_CLUSTER_ID}"
+    topic = f"video/request/ping/{EDGE_ID}"
     message_json = json.dumps(status_data)
     
     try:
@@ -151,9 +150,9 @@ def run():
     
     client.loop_start()
     
-    print(f"Edge Cluster ID: {EDGE_CLUSTER_ID}")
+    print(f"Edge Cluster ID: {EDGE_ID}")
     print("Listening for ping requests on topic: video/request/ping")
-    print(f"Will respond on topic: video/request/ping/{EDGE_CLUSTER_ID}")
+    print(f"Will respond on topic: video/request/ping/{EDGE_ID}")
     
     while True:
         time.sleep(1)
