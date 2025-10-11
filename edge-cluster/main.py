@@ -9,9 +9,8 @@ import uuid
 # MQTT Configuration
 BROKER = 'localhost'
 PORT = 1883
-EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
+EDGE_ID = str(uuid.uuid4())
 CLIENT_ID = str(uuid.uuid4())
-TOPIC_ID = f"auth/user/{EDGE_ID}/"
 DB_NAME = 'edge_cluster.db'
 
 videoslist=[]
@@ -503,7 +502,7 @@ def run():
     subscribe(client, "db")
     subscribe(client, f"db/{EDGE_ID}")
     subscribe(client, f"auth/zone/{EDGE_ID}/")
-    subscribe(client, "video/request/ping")
+    subscribe(client, f"video/request/ping")
     subscribe(client, f"live/upload/{EDGE_ID}")
 
     subscribe(client, "video/upload/{EDGE_ID}")
