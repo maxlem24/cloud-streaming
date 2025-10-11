@@ -14,8 +14,6 @@ CLIENT_ID = str(uuid.uuid4())
 TOPIC_ID = f"auth/user/{EDGE_ID}/"
 DB_NAME = 'edge_cluster.db'
 
-videoslist=[]
-
 def db_setup(): 
     """Initialize SQLite database and create tables if they don't exist"""
     connection = sqlite3.connect(DB_NAME)
@@ -278,6 +276,34 @@ def db_get_chunk(video_id,chunk_id):
     connection.close()
     return chunk
 
+def db_export_videos():
+    """Export only the videos table as JSON-compatible dicts"""
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+
+    # Videos
+    cursor.execute('SELECT id, title, description, category, live, edges, thumbnail, streamer_id, created_at FROM video')
+    videos = [
+        {
+            "id": row[0],
+            "title": row[1],
+            "description": row[2],
+            "category": row[3],
+            "live": row[4],
+            "edges": row[5],
+            "thumbnail": row[6],
+            "streamer_id": row[7],
+            "created_at": row[8]
+        }
+        for row in cursor.fetchall()
+    ]
+
+    connection.close()
+    
+    json_videos = json.dumps(videos, indent=4)
+    
+    return json_videos
+
 def db_export():
     """Export the entire database content as JSON-compatible dicts"""
     connection = sqlite3.connect(DB_NAME)
@@ -367,7 +393,7 @@ def subscribe(client: mqtt_client, topic: str):
             #faire des trucs avec la signature (voir avec Maxime)
             end = message_json["end"]
             if(end == 1):
-                publish(client,f"live/db/update", json.dumps({"status":"fin","type":"live","id_live":id_live, "EDGE_ID":EDGE_ID}))
+                publish(client,f"live/db/update", json.dumps({"status":"suppression","type":"live","id_live":id_live, "EDGE_ID":EDGE_ID}))
                 #mettre à jour la bdd locale pour dire que le live id_live est terminé
             try:
                 id_streamer=message_json["id_streamer"]
@@ -387,7 +413,7 @@ def subscribe(client: mqtt_client, topic: str):
                 try:
                     chunk=message_json["chunk"]
                     chunk_part=message_json["chunk_ID"]
-                    publish(client,f"live/watch/{EDGE_ID}/{id_live}", json.dumps({"status":"ok", "chunk":chunk, "chunk_part":chunk_part}))
+                    publish(client,f"live/watch/{EDGE_ID}/{id_live}", json.dumps({"chunk":chunk, "chunk_part":chunk_part}))
                 except:
                     chunk=None
                     chunk_part=None
@@ -421,13 +447,12 @@ def subscribe(client: mqtt_client, topic: str):
                 if(not streamer_exist):
                     db_add_streamer(streamer_id, streamer_nom)
                 db_add_video(video_ID, video_nom, description, category, 0, EDGE_ID, thumbnail, streamer_id)
-                publish(client,f"video/upload/{EDGE_ID}/{video_ID}", json.dumps({"status":"ok","video_ID":video_ID,"EDGE_ID":EDGE_ID}))
+                publish(client,f"video/upload/{EDGE_ID}/{video_ID}", json.dumps({"video_ID":video_ID,"EDGE_ID":EDGE_ID}))
             else:
                 "partie 2"
-                #vérif video existe dans bdd
                 video_exist=True if db_get_video_by_id(video_ID) else False
                 if(not video_exist):
-                    print("erreur, vidéo non trouvée dans bdd : nom={video_nom}, ID={video_ID}")
+                    print("erreur, vidéo non trouvée dans bdd : ID={video_ID}")
                 if(end=="1"):
                     #pas besoin de vérif si on a tous les chunks (le streamer envoie le chunk d'apres que s'il a le ack d'avant)
                     publish(client,f"db/update", json.dumps({"status":"ajout","video_ID":video_ID,"EDGE_ID":CLIENT_ID}))
@@ -436,7 +461,7 @@ def subscribe(client: mqtt_client, topic: str):
                     verif_chunk=db_add_chunk(video_ID, f"{chunk_part}", chunk)
                     if (not verif_chunk):
                         print(f"erreur lors de l'ajout du chunk dans la bdd\n video_ID={video_ID}, chunk_part={chunk_part}")
-                    publish(client,f"video/upload/{EDGE_ID}/{streamer_id}", json.dumps({"status":"ok","video_ID":video_ID,"chunk_part":chunk_part,"EDGE_ID":EDGE_ID}))
+                    publish(client,f"video/upload/{EDGE_ID}/{streamer_id}", json.dumps({"video_ID":video_ID,"chunk_part":chunk_part,"EDGE_ID":EDGE_ID}))
         if(msg.topic==f"db/update"):
             message_json=json.loads(msg.payload.decode())
             video_ID=message_json["video_ID"]
@@ -452,9 +477,9 @@ def subscribe(client: mqtt_client, topic: str):
             #partie edge de get_videos
             message_json=json.loads(msg.payload.decode())
             client_ID=message_json["client_ID"]
-            ### recup la liste des videos de la bdd
+            videoslist=db_export_videos()
             ### mettre en liste de listes ([video nom 1,id1, category, streamers, edges qui l'ont...]...)
-            publish(client,f"video/liste/{EDGE_ID}/{client_ID}", json.dumps({"status":"ok","liste_videos_noms,ID":videoslist}))
+            publish(client,f"video/liste/{EDGE_ID}/{client_ID}", json.dumps({"liste_videos":videoslist}))
         if(msg.topic==f"video/watch/{EDGE_ID}"):
             #partie edge de watch_video()
             message_json=json.loads(msg.payload.decode())
@@ -463,15 +488,15 @@ def subscribe(client: mqtt_client, topic: str):
             video_ID=message_json["video_ID"]
             end=message_json["end"]
             if(init=="1"):
-                publish(client,f"video/watch/{EDGE_ID}/{client_ID}", json.dumps({"status":"ok","video_nom":video_nom,"video_ID":video_ID,"chunk_part":"0"}))
+                publish(client,f"video/watch/{EDGE_ID}/{client_ID}", json.dumps({"video_nom":video_nom,"video_ID":video_ID,"chunk_part":"0"}))
             
             elif(end=="1"):
                 ### dire que la vidéo est finie
-                publish(client,f"video/watch/{EDGE_ID}/{client_ID}", json.dumps({"status":"ok","video_nom":video_nom,"chunk_part":"end"}))
+                publish(client,f"video/watch/{EDGE_ID}/{client_ID}", json.dumps({"video_nom":video_nom,"chunk_part":"end"}))
             else:
                 chunk_part=message_json["chunk_part"]
                 chunk=db_get_chunk(video_ID,chunk_part)
-                publish(client,f"video/watch/{EDGE_ID}/{client_ID}", json.dumps({"status":"ok","video_nom":video_nom,"chunk_part":chunk_part,"chunk":chunk}))
+                publish(client,f"video/watch/{EDGE_ID}/{client_ID}", json.dumps({"video_nom":video_nom,"chunk_part":chunk_part,"chunk":chunk}))
 
 
         if (msg.topic=="db/"):
