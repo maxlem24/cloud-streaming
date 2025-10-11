@@ -51,13 +51,14 @@ publish(client,f"video/liste/{EDGE_ID}", json.dumps({"client_ID":CLIENT_ID}))
 
 
 ###visionnage de vidéo (demande de visionnage)
-    # en 3 temps, init, envoi et end
-    #init=1 au début =0 apres, et end="1" à la fin ="0" avant
-    #pour résumé au débu : client_ID, video_ID, init="1"
-    #pour résumé apres : client_ID, video_ID, chunk_part, init="0"   ===> noter que ici, chunk part c'est le dernier reçu
-    #pour résumé à la fin : client_ID, video_ID, init="0"
+    #envoi vers "video/watch/{EDGE_ID}"
+        # en 3 temps, init, envoi et end
+        #init=1 au début =0 apres, et end="1" à la fin ="0" avant
+        #pour résumé au débu : client_ID, video_ID, init="1"
+        #pour résumé apres : client_ID, video_ID, chunk_part, init="0"   ===> noter que ici, chunk part c'est le dernier reçu
+        #pour résumé à la fin : client_ID, video_ID, init="0"
 
-    #reçoit : 
+    #reçoit vers "video/watch/{EDGE_ID}/{client_ID}" les chunks de la vidéo: 
         #au debut : {"video_nom": "video1", "video_ID": "video1", "chunk_part": "0", "end": "0"}
         #apres : {"video_nom": "video1", "video_ID": "video1", "chunk": "chunk1", "chunk_part": "N", "end": "0"}
         #à la fin : {"video_nom": "video1", "video_ID": "video1", "end": "1"}
