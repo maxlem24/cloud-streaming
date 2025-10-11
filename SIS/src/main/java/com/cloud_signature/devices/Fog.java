@@ -1,4 +1,4 @@
-package com.cloud_signature.signature;
+package com.cloud_signature.devices;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -6,11 +6,19 @@ import java.security.NoSuchAlgorithmException;
 
 import org.ejml.simple.SimpleMatrix;
 
-import com.cloud_signature.Globals;
+import com.cloud_signature.signature.DelegationKeyPair;
+import com.cloud_signature.signature.Gen_seed;
+import com.cloud_signature.signature.NoDelegationException;
+import com.cloud_signature.signature.Sign_params;
+import com.cloud_signature.signature.Signature;
+import com.cloud_signature.signature.Signed_Data;
+import com.cloud_signature.signature.Signed_Data_Delegated;
+import com.cloud_signature.utils.Globals;
 
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 
+// Noeud du fog qui vérifie les signatures et peut signer des données par délégation
 public class Fog {
     private byte[] id_d;
     private Element pk_s;

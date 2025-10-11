@@ -1,14 +1,18 @@
-package com.cloud_signature.signature;
+package com.cloud_signature.devices;
 
 import java.security.NoSuchAlgorithmException;
 
 import org.ejml.simple.SimpleMatrix;
 
-import com.cloud_signature.Globals;
+import com.cloud_signature.signature.Sign_params;
+import com.cloud_signature.signature.Signed_Data;
+import com.cloud_signature.signature.Signed_Data_Delegated;
+import com.cloud_signature.utils.Globals;
 
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 
+// Client final qui vérifie l'authenticité des données signées (avec ou sans délégation)
 public class Client {
     private byte[] id_c;
 

@@ -4,6 +4,7 @@ import org.ejml.simple.SimpleMatrix;
 
 import it.unisa.dia.gas.jpbc.Element;
 
+// Données signées contenant le message, la signature et tous les pautres aramètres pour la vérification
 public class Signed_Data {
     private Gen_seed paramA;
     private byte[] id_w;

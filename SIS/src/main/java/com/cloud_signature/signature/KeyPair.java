@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import it.unisa.dia.gas.jpbc.Element;
 
+// Paire de clés secrète (s_w) et publique (p_k) basées sur une identité
 public class KeyPair implements Serializable {
     private Element s_w;
     private Element p_k;

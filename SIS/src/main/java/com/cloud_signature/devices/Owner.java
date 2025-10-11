@@ -1,16 +1,19 @@
-package com.cloud_signature.signature;
+package com.cloud_signature.devices;
 
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
-import org.ejml.simple.SimpleMatrix;
-
-import com.cloud_signature.Globals;
+import com.cloud_signature.signature.DelegationKeyPair;
+import com.cloud_signature.signature.Gen_seed;
+import com.cloud_signature.signature.KeyPair;
+import com.cloud_signature.signature.Sign_params;
+import com.cloud_signature.signature.Signature;
+import com.cloud_signature.signature.Signed_Data;
+import com.cloud_signature.utils.Globals;
 
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
+import java.security.NoSuchAlgorithmException;
+import org.ejml.simple.SimpleMatrix;
 
+// Propriétaire de données qui peut signer des données et créer des clés de délégation pour les noeuds du fog
 public class Owner {
     private KeyPair keys;
     private byte[] id_w;

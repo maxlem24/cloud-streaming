@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import it.unisa.dia.gas.jpbc.Element;
 
+// Paire de clés de délégation permettant à un noeud du fog de signer à la place du propriétaire
 public class DelegationKeyPair implements Serializable {
     private Element dk_d;
     private Element pk_d;

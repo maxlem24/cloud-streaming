@@ -4,6 +4,7 @@ import org.ejml.simple.SimpleMatrix;
 
 import it.unisa.dia.gas.jpbc.Element;
 
+// Données signées par délégation qui incluent en plus l'identité et la clé publique du propriétaire originel
 public class Signed_Data_Delegated extends Signed_Data {
     private byte[] id_d;
     private Element pk_d;

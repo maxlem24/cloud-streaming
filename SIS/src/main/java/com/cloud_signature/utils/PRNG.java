@@ -1,5 +1,8 @@
-package com.cloud_signature.signature;
+package com.cloud_signature.utils;
 
+import com.cloud_signature.signature.Gen_seed;
+
+// Générateur de nombres pseudo-aléatoires
 public class PRNG {
     private int in;
     private int cn;

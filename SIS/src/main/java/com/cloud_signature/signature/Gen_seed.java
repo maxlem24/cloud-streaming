@@ -1,7 +1,8 @@
 package com.cloud_signature.signature;
 
-import com.cloud_signature.Globals;
+import com.cloud_signature.utils.Globals;
 
+// Classe contenant les paramètres utilisés pour la génération pseudo-aléatoire des matrices
 public class Gen_seed {
 
     private int i_0;

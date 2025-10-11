@@ -2,11 +2,8 @@ package com.cloud_signature;
 
 import java.security.NoSuchAlgorithmException;
 
-import com.cloud_signature.signature.Client;
-import com.cloud_signature.signature.Fog;
-import com.cloud_signature.signature.IdentificationServer;
+import com.cloud_signature.devices.*;
 import com.cloud_signature.signature.NoDelegationException;
-import com.cloud_signature.signature.Owner;
 import com.cloud_signature.signature.Signed_Data;
 import com.cloud_signature.signature.Signed_Data_Delegated;
 

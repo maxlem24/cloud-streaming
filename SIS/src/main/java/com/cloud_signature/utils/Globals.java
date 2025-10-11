@@ -1,4 +1,4 @@
-package com.cloud_signature;
+package com.cloud_signature.utils;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -7,7 +7,6 @@ import java.security.NoSuchAlgorithmException;
 import org.ejml.simple.SimpleMatrix;
 
 import com.cloud_signature.signature.Gen_seed;
-import com.cloud_signature.signature.PRNG;
 
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;

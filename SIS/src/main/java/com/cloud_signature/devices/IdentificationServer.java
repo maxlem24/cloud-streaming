@@ -1,11 +1,14 @@
-package com.cloud_signature.signature;
+package com.cloud_signature.devices;
 
 import java.security.NoSuchAlgorithmException;
 
-import com.cloud_signature.Globals;
+import com.cloud_signature.signature.KeyPair;
+import com.cloud_signature.utils.Globals;
 
 import it.unisa.dia.gas.jpbc.Element;
 
+// Serveur d'identification qui génère et distribue les paires de clés
+// privées/publiques générées à partir de l'identité des utilisateurs
 public class IdentificationServer {
     private Element ts;
     private Element pk_s;
