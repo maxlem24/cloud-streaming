@@ -502,10 +502,10 @@ def run():
     subscribe(client, "db")
     subscribe(client, f"db/{EDGE_ID}")
     subscribe(client, f"auth/zone/{EDGE_ID}/")
-    subscribe(client, f"video/request/ping")
+    subscribe(client, "video/request/ping")
     subscribe(client, f"live/upload/{EDGE_ID}")
 
-    subscribe(client, "video/upload/{EDGE_ID}")
+    subscribe(client, f"video/upload/{EDGE_ID}")
 
     subscribe(client, "db/update")
     subscribe(client, f"video/liste/{EDGE_ID}")
