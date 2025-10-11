@@ -2,9 +2,10 @@ import json
 import random
 import time
 from paho.mqtt import client as mqtt_client
+import sqlite3
 
 # MQTT Configuration
-BROKER = '192.168.2.81'
+BROKER = 'localhost'
 PORT = 1883
 TOPIC = "auth/user/"
 TOPIC_ID = "auth/user/ID/"
@@ -116,9 +117,9 @@ def db_remove_streamer(streamer_id):
     
 def db_import(body) :
     for s in body["streamer"] :
-        add_streamer(s["id"], s["name"])
+        db_add_streamer(s["id"], s["name"])
     for v in body["videos"] :
-        add_video(v["id"], v["title"], v["description"], v["category"], v["edges"], v["thumbnail"], s["id"])
+        db_add_video(v["id"], v["title"], v["description"], v["category"], v["edges"], v["thumbnail"], s["id"])
         
 def db_get_video_by_id(video_id):
     """Retrieve a video by its ID"""
@@ -254,7 +255,9 @@ def subscribe(client: mqtt_client, topic: str):
             message_json=json.loads(msg.payload.decode())
             video_ID=message_json["video_ID"]
             video_nom=message_json["video_nom"]
+            description=message_json["description"]
             category=message_json["category"]
+            thumbnail=message_json["thumbnail"]
             chunk=message_json["chunk"]
             chunk_part=message_json["chunk_part"] #combien t ieme chunk
             end=message_json["end"]
@@ -267,63 +270,58 @@ def subscribe(client: mqtt_client, topic: str):
 
             if (streamer_id):
                 "partie 1"
-                ##vérif si streamer existe 
+                ##vérif si streamer existe, dans quel cas on ajoute vidéo et publie, sinon rajoute streamer avant
+                streamer_exist=True if db_get_streamer_by_id(streamer_id) else False
                 if(not streamer_exist):
-                    ##créer stremer nom et id
-                    print("fill")
-                ##ajouter new video au streamer
-                ##avec category, video ID, video nom
-                publish(client,f"video/upload/{CLIENT_ID}/{streamer_id}", json.dumps({"status":"ok","video_ID":video_ID}))
+                    db_add_streamer(streamer_id, streamer_nom)
+                db_add_video(video_ID, video_nom, description, category, 0, CLIENT_ID, thumbnail, streamer_id)
+                publish(client,f"video/upload/{CLIENT_ID}/{video_ID}", json.dumps({"status":"ok","video_ID":video_ID,"CLIENT_ID":CLIENT_ID}))
             else:
                 "partie 2"
                 #vérif video existe dans bdd
+                video_exist=True if db_get_video_by_id(video_ID) else False
                 if(not video_exist):
-                    print("erreur, vidéo nom trouvée dans bdd : nom={video_nom}, ID={video_ID}")
+                    print("erreur, vidéo non trouvée dans bdd : nom={video_nom}, ID={video_ID}")
                 if(end=="1"):
-                    #vérif que tous les chunks sont là (sans trous) dans la bdd
-                    if(all_chunks):
-                        publish(client,f"db/update", json.dumps({"status":"ajout","video_ID":video_ID,"EDGE_ID":CLIENT_ID}))
-                    else:
-                        #recup chunks manquants
-                        publish(client,f"video/upload/{CLIENT_ID}/{streamer_id}", json.dumps({"status":"error","video_ID":video_ID,"chunk_part":chunk_part}))
+                    #pas besoin de vérif si on a tous les chunks (le streamer envoie le chunk d'apres que s'il a le ack d'avant)
+                    publish(client,f"db/update", json.dumps({"status":"ajout","video_ID":video_ID,"EDGE_ID":CLIENT_ID}))
+                    
                 else:
-                    #ajouter chunk et chunk part dans bdd
-                    publish(client,f"video/upload/{CLIENT_ID}/{streamer_id}", json.dumps({"status":"ok","video_ID":video_ID,"chunk_part":chunk_part}))
+                    verif_chunk=db_add_chunk(video_ID, f"{chunk_part}", chunk)
+                    if (not verif_chunk):
+                        print(f"erreur lors de l'ajout du chunk dans la bdd\n video_ID={video_ID}, chunk_part={chunk_part}")
+                    publish(client,f"video/upload/{CLIENT_ID}/{streamer_id}", json.dumps({"status":"ok","video_ID":video_ID,"chunk_part":chunk_part,"CLIENT_ID":CLIENT_ID}))
         if(msg.topic==f"db/update"):
             message_json=json.loads(msg.payload.decode())
             video_ID=message_json["video_ID"]
             video_nom=message_json["video_nom"]
             category=message_json["category"]
-            EDGE_ID2=message_json["EDGE_ID"]
-            ### mettre à jour la db pr dire que le edge_id2 a la vidéo
+            CLIENT2_ID=message_json["CLIENT_ID"]
+            db_add_video_edges(video_ID, CLIENT2_ID)
         if(msg.topic==f"video/liste/{CLIENT_ID}"):
             #partie edge de get_videos
             message_json=json.loads(msg.payload.decode())
             client_ID=message_json["client_ID"]
             ### recup la liste des videos de la bdd
             ### mettre en liste de listes ([video nom 1,id1, category, streamers, edges qui l'ont...]...)
-            publish(client,f"video/liste/{CLIENT_ID}/{client_ID}", json.dumps({"status":"ok","liste_videos_noms,ID":liste_videos}))
+            publish(client,f"video/liste/{CLIENT_ID}/{client_ID}", json.dumps({"status":"ok","liste_videos_noms,ID":videoslist}))
         if(msg.topic==f"video/watch/{CLIENT_ID}"):
             #partie edge de watch_video()
             message_json=json.loads(msg.payload.decode())
             client_ID=message_json["client_ID"]
             init=message_json["init"]
             video_ID=message_json["video_ID"]
-            
             end=message_json["end"]
             if(init=="1"):
-                ### recup l'ID vidéo de la bdd
-                publish(client,f"video/watch/{CLIENT_ID}/{client_ID}", json.dumps({"status":"ok","video_nom":video_nom,"video_ID":video_ID,"chunk_part":"0"}))
+                publish(client,f"video/watch/{CLIENT_ID}/{video_ID}", json.dumps({"status":"ok","video_nom":video_nom,"video_ID":video_ID,"chunk_part":"0"}))
             
             elif(end=="1"):
-                video_ID=message_json["video_ID"]
                 ### dire que la vidéo est finie
-                publish(client,f"video/watch/{CLIENT_ID}/{client_ID}", json.dumps({"status":"ok","video_nom":video_nom,"chunk_part":"end"}))
+                publish(client,f"video/watch/{CLIENT_ID}/{video_ID}", json.dumps({"status":"ok","video_nom":video_nom,"chunk_part":"end"}))
             else:
-                video_ID=message_json["video_ID"]
                 chunk_part=message_json["chunk_part"]
                 ### recup le chunk_part de la bdd
-                publish(client,f"video/watch/{CLIENT_ID}/{client_ID}", json.dumps({"status":"ok","video_nom":video_nom,"chunk_part":chunk_part,"chunk":chunk}))
+                publish(client,f"video/watch/{CLIENT_ID}/{video_ID}", json.dumps({"status":"ok","video_nom":video_nom,"chunk_part":chunk_part,"chunk":chunk}))
 
         if (msg.topic=="db/"):
 
@@ -359,12 +357,11 @@ def run():
     subscribe(client, "video/upload/{EDGE_ID}")
     subscribe(client, "auth/zone")  
     subscribe(client, f"db/update")
-    subscribe(client, f"video/liste/{EDGE_ID}")
-    subscribe(client, f"video/watch/{EDGE_ID}")
-    client.loop_forever()
+    subscribe(client, f"video/liste/{CLIENT_ID}")
+    subscribe(client, f"video/watch/{CLIENT_ID}")
 
-    db_add_streamer("streamer1", "Streamer One")
-    db_add_video("video1", "Video One", "Description of Video One", "Category1", 1, "edge1,edge2", "thumbnail1.jpg", "streamer1")
-
+    #db_add_streamer("streamer1", "Streamer One")
+    #db_add_video("video1", "Video One", "Description of Video One", "Category1", 1, "edge1,edge2", "thumbnail1.jpg", "streamer1")
+    print(db_get_streamer_by_id("streamer2"))
 if __name__ == '__main__':
     run()
