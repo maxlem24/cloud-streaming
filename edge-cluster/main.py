@@ -10,7 +10,6 @@ import uuid
 BROKER = '10.246.146.52'
 PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
-CLIENT_ID = str(uuid.uuid4())
 TOPIC_ID = f"auth/user/{EDGE_ID}/"
 DB_NAME = 'edge_cluster.db'
 
@@ -467,10 +466,10 @@ def subscribe(client: mqtt_client, topic: str):
 
                     verif_chunk=db_add_chunk(video_id, f"{chunk_part}", chunk)
                     if (not verif_chunk):
-                        print(f"erreur lors de l'ajout du chunk dans la bdd\n video_ID={video_id}, chunk_part={chunk_part}")
+                        print(f"erreur lors de l'ajout du chunk dans la bdd\n video_id={video_id}, chunk_part={chunk_part}")
                     else: 
-                        publish(client,f"db/update", json.dumps({"status":"ajout","live":False,"video_ID":video_id,"EDGE_ID":EDGE_ID}))
-                        
+                        publish(client,f"db/update", json.dumps({"status":"ajout","live":False,"video_id":video_id,"EDGE_ID":EDGE_ID}))
+
 
                 else:
                     verif_chunk=db_add_chunk(video_id, f"{chunk_part}", chunk)
@@ -504,26 +503,26 @@ def subscribe(client: mqtt_client, topic: str):
         if(msg.topic==f"video/liste/{EDGE_ID}"):
             #partie edge de get_videos
             message_json=json.loads(msg.payload.decode())
-            client_ID=message_json["client_ID"]
+            client_id=message_json["client_id"]
             videoslist=db_export_videos()
             ### mettre en liste de listes ([video nom 1,id1, category, streamers, edges qui l'ont...]...)
-            publish(client,f"video/liste/{EDGE_ID}/{client_ID}", json.dumps({"liste_videos":videoslist}))
+            publish(client,f"video/liste/{EDGE_ID}/{client_id}", json.dumps({"liste_videos":videoslist}))
         if(msg.topic==f"video/watch/{EDGE_ID}"):
             #partie edge de watch_video()
             message_json=json.loads(msg.payload.decode())
-            client_ID=message_json["client_ID"]
+            client_id=message_json["client_id"]
             init=message_json["init"]
             video_id=message_json["video_id"]
             
             if(init=="1"):
-                publish(client,f"video/watch/{EDGE_ID}/{client_ID}", json.dumps({"video_nom":video_nom,"video_id":video_id,"chunk_part":"0","end":"0"}))
+                publish(client,f"video/watch/{EDGE_ID}/{client_id}", json.dumps({"video_nom":video_nom,"video_id":video_id,"chunk_part":"0","end":"0"}))
 
             else:
                 chunk_part=int(message_json["chunk_part"])+1
-                chunk=db_get_chunk(video_ID,chunk_part)
+                chunk=db_get_chunk(video_id,chunk_part)
                 if(not chunk):
-                    publish(client,f"video/watch/{EDGE_ID}/{client_ID}", json.dumps({"video_nom":video_nom,"video_ID":video_ID,"end":"1"}))
-                publish(client,f"video/watch/{EDGE_ID}/{client_ID}", json.dumps({"video_nom":video_nom,"video_ID":video_ID,"chunk_part":chunk_part,"chunk":chunk,"end":"0"}))
+                    publish(client,f"video/watch/{EDGE_ID}/{client_id}", json.dumps({"video_nom":video_nom,"video_id":video_id,"end":"1"}))
+                publish(client,f"video/watch/{EDGE_ID}/{client_id}", json.dumps({"video_nom":video_nom,"video_id":video_id,"chunk_part":chunk_part,"chunk":chunk,"end":"0"}))
 
 
         if (msg.topic=="db/"):
