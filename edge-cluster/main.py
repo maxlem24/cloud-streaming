@@ -470,7 +470,7 @@ def subscribe(client: mqtt_client, topic: str):
                 publish(client,f"video/watch/{EDGE_ID}/{client_ID}", json.dumps({"status":"ok","video_nom":video_nom,"chunk_part":"end"}))
             else:
                 chunk_part=message_json["chunk_part"]
-                ### recup le chunk_part de la bdd
+                chunk=db_get_chunk(video_ID,chunk_part)
                 publish(client,f"video/watch/{EDGE_ID}/{client_ID}", json.dumps({"status":"ok","video_nom":video_nom,"chunk_part":chunk_part,"chunk":chunk}))
 
 
