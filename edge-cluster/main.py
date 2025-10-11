@@ -7,10 +7,11 @@ import datetime
 import uuid
 
 # MQTT Configuration
-BROKER = 'localhost'
+BROKER = '10.246.146.52'
 PORT = 1883
-EDGE_ID = str(uuid.uuid4())
+EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 CLIENT_ID = str(uuid.uuid4())
+TOPIC_ID = f"auth/user/{EDGE_ID}/"
 DB_NAME = 'edge_cluster.db'
 
 videoslist=[]
@@ -266,6 +267,17 @@ def db_get_streamer_by_id(streamer_id):
     connection.close()
     return streamer
 
+def db_get_chunk(video_id,chunk_id):
+    """Retrieve a streamer by its ID"""
+    connection = sqlite3.connect(DB_NAME)
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT * FROM chunk WHERE video_id = ? AND id = ?', (video_id, chunk_id))
+    chunk = cursor.fetchone()
+
+    connection.close()
+    return chunk
+
 def db_export():
     """Export the entire database content as JSON-compatible dicts"""
     connection = sqlite3.connect(DB_NAME)
@@ -431,7 +443,11 @@ def subscribe(client: mqtt_client, topic: str):
             video_nom=message_json["video_nom"]
             category=message_json["category"]
             EDGE2_ID=message_json["EDGE2_ID"]
-            db_add_video_edges(video_ID, EDGE2_ID)
+            status=message_json["status"]
+            if(status=="ajout"):
+                db_add_video_edges(video_ID, EDGE2_ID)
+            elif(status=="suppression"):
+                db_remove_video_edges(video_ID, EDGE2_ID)
         if(msg.topic==f"video/liste/{EDGE_ID}"):
             #partie edge de get_videos
             message_json=json.loads(msg.payload.decode())
@@ -501,11 +517,11 @@ def run():
     premiere_connexion(client)
     subscribe(client, "db")
     subscribe(client, f"db/{EDGE_ID}")
-    subscribe(client, f"auth/zone/{EDGE_ID}/")
+    subscribe(client, f"auth/zone/{EDGE_ID}")
     subscribe(client, "video/request/ping")
     subscribe(client, f"live/upload/{EDGE_ID}")
 
-    subscribe(client, f"video/upload/{EDGE_ID}")
+    subscribe(client, "video/upload/{EDGE_ID}")
 
     subscribe(client, "db/update")
     subscribe(client, f"video/liste/{EDGE_ID}")
