@@ -110,6 +110,11 @@ def get_database(client,topic,message):
     # -> faire ton "truc" ici
 
     
+    client = connect_mqtt()
+    subscribe(client, f"auth/user/")
+    client.loop_forever()
+    
+    
 
             
     

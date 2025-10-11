@@ -7,9 +7,10 @@ import sqlite3
 # MQTT Configuration
 BROKER = 'localhost'
 PORT = 1883
-TOPIC = "auth/user/"
-TOPIC_ID = "auth/user/ID/"
 CLIENT_ID = f'python-mqtt-{random.randint(0, 1000)}'
+TOPIC_DB = f"db/"
+TOPIC_DB_ID = f"db/{CLIENT_ID}/"
+TOPIC_ID = f"auth/user/{CLIENT_ID}/"
 DB_NAME = 'edge_cluster.db'
 videoslist=[]
 
@@ -116,7 +117,8 @@ def db_remove_streamer(streamer_id):
     connection.close()
     
 def db_import(body) :
-    for s in body["streamer"] :
+    for s in body["streamers"]:
+        print(s)
         db_add_streamer(s["id"], s["name"])
     for v in body["videos"] :
         db_add_video(v["id"], v["title"], v["description"], v["category"], v["edges"], v["thumbnail"], s["id"])
@@ -182,25 +184,47 @@ def db_get_streamer_by_id(streamer_id):
     return streamer
 
 def db_export():
-    """Export the entire database content"""
+    """Export the entire database content as JSON-compatible dicts"""
     connection = sqlite3.connect(DB_NAME)
     cursor = connection.cursor()
-    
-    cursor.execute('SELECT * FROM streamer')
-    streamers = cursor.fetchall()
-    
-    cursor.execute('SELECT * FROM video')
-    videos = cursor.fetchall()
-    
-    cursor.execute('SELECT * FROM chunk')
-    chunks = cursor.fetchall()
-    
+
+    # Streamers
+    cursor.execute('SELECT id, name, created_at FROM streamer')
+    streamers = [
+        {"id": row[0], "name": row[1], "created_at": row[2]}
+        for row in cursor.fetchall()
+    ]
+
+    # Videos
+    cursor.execute('SELECT id, title, description, category, live, edges, thumbnail, streamer_id, created_at FROM video')
+    videos = [
+        {
+            "id": row[0],
+            "title": row[1],
+            "description": row[2],
+            "category": row[3],
+            "live": row[4],
+            "edges": row[5],
+            "thumbnail": row[6],
+            "streamer_id": row[7],
+            "created_at": row[8]
+        }
+        for row in cursor.fetchall()
+    ]
+
+    # Chunks
+    cursor.execute('SELECT id, video_id, part FROM chunk')
+    chunks = [
+        {"id": row[0], "video_id": row[1], "part": row[2]}
+        for row in cursor.fetchall()
+    ]
+
     db_content = {
         "streamers": streamers,
         "videos": videos,
         "chunks": chunks
     }
-    
+
     connection.close()
     return db_content
         
@@ -218,9 +242,8 @@ def connect_mqtt():
     return client
 
 def publish(client, topic, message):
-    """Publish messages to MQTT topic"""    
+    """Publish messages to MQTT topic"""
     result = client.publish(topic, message)
-
     status = result[0]
     if status == 0:
         print(f"Send `{message}` to topic `{topic}`")
@@ -232,13 +255,11 @@ def publish(client, topic, message):
 def subscribe(client: mqtt_client, topic: str):
     def on_message(client, userdata, msg):
         print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
-
         if (msg.topic=="auth/user/"):
             message_json=json.loads(msg.payload.decode())
             user=message_json["user"]
             password=message_json["password"]
             ID=message_json["ID"]
-
         if (msg.topic==f"auth/user/{CLIENT_ID}/"):
             print("Message reçu depuis auth/user/ID/")
 
@@ -323,42 +344,64 @@ def subscribe(client: mqtt_client, topic: str):
                 ### recup le chunk_part de la bdd
                 publish(client,f"video/watch/{CLIENT_ID}/{video_ID}", json.dumps({"status":"ok","video_nom":video_nom,"chunk_part":chunk_part,"chunk":chunk}))
 
+
         if (msg.topic=="db/"):
-
-            ID = "A remplacer quand on aura le format des paquets"
-            
-            if 'db is present':
+            db_content = db_export()
+            db_json = json.dumps(db_content)
+            message_json=json.loads(msg.payload.decode())
+            ID = message_json["ID"]
+            print(ID)
+            print(message_json)
+            if db_content["streamers"]:
                 # send db 
-                print("TODO: send DB")
-                publish(client,f"db/{ID}")
-
+                print("Envoie de la DB faite")
+                publish(client,f"db/{ID}/",db_json)
             else:
-                '''db non presente'''
-                payload = json.dumps({'DB' : "Empty"})
-                publish(client,f"db/{ID}",payload)
-        if (msg.tpoic == f"db/{CLIENT_ID}"):
-            ''
+                print("On a pas de DB donc ff on envoie que c'est empty")
+                payload = json.dumps({'streamers' : "Empty"})
+                publish(client,f"db/{ID}/",payload)
+        if (msg.topic == f"db/{CLIENT_ID}/"):
+            print("AAAAAAAAAAAAAAAAAAAAA")
+            message_json=json.loads(msg.payload.decode())
+            if message_json['streamers'] == "Empty":
+                print("On ne fait rien, car on a reçu une BDD vide")
+            else:
+                db_import(message_json)
     client.subscribe(topic)
+    print(f"On est souscrit au topic {topic}")
     client.on_message = on_message
 
 def premiere_connexion(client):
     # On envoie notre ID au serveur.
-    publish(client,"auth/user/",CLIENT_ID)
-    publish(client,"db/",CLIENT_ID)
+    payload = {
+        'ID' : CLIENT_ID,
+    }
+    payload_ID = json.dumps(payload)
+    publish(client,"auth/user/",payload_ID)
+    publish(client,"db/",payload_ID)
 
 
 def run():
     """Main function to run MQTT client"""
 
     client = connect_mqtt()
-    db_setup()
-    subscribe(client, TOPIC)
+    db_setup()  
+    premiere_connexion(client)
+    subscribe(client, TOPIC_DB)
+    subscribe(client, TOPIC_DB_ID)
     subscribe(client,TOPIC_ID)      
+
     subscribe(client, "video/upload/{EDGE_ID}")
     subscribe(client, "auth/zone")  
     subscribe(client, f"db/update")
     subscribe(client, f"video/liste/{CLIENT_ID}")
     subscribe(client, f"video/watch/{CLIENT_ID}")
+
+
+    # db_add_streamer("streamer22", "Streamer One")
+    client.loop_forever()
+    # db_add_video("video1", "Video One", "Description of Video One", "Category1", 1, "edge1,edge2", "thumbnail1.jpg", "streamer1")
+
 
     #db_add_streamer("streamer1", "Streamer One")
     #db_add_video("video1", "Video One", "Description of Video One", "Category1", 1, "edge1,edge2", "thumbnail1.jpg", "streamer1")
