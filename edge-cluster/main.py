@@ -464,7 +464,7 @@ def subscribe(client: mqtt_client, topic: str):
                         print(f"erreur lors de l'ajout du chunk dans la bdd\n video_ID={video_ID}, chunk_part={chunk_part}")
                     else: 
                         publish(client,f"db/update", json.dumps({"status":"ajout","type":"video","video_ID":video_ID,"EDGE_ID":CLIENT_ID}))
-                    
+                        
                 else:
                     verif_chunk=db_add_chunk(video_ID, f"{chunk_part}", chunk)
                     if (not verif_chunk):
