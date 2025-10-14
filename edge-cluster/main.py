@@ -1,3 +1,4 @@
+import code
 import json
 from paho.mqtt import client as mqtt_client
 import sqlite3
@@ -12,6 +13,23 @@ PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 TOPIC_ID = f"auth/user/{EDGE_ID}/"
 DB_NAME = 'edge_cluster.db'
+
+
+JAR_PATH = "file.jar"  # chemin vers votre jar (ajustez si besoin)
+
+
+def run_jar(args: list, timeout: int = 10) -> Optional[str]:
+    """Run java -jar <JAR_PATH> <args...> and return stdout (str) or None on error."""
+    cmd = ["java", "-jar", JAR_PATH] + args
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
+        if proc.returncode != 0:
+            print(f"jar error rc={proc.returncode} stderr={proc.stderr.strip()}")
+            return None
+        return proc.stdout.strip()
+    except Exception as e:
+        print(f"failed to run jar: {e}")
+        return None
 
 def db_setup(): 
     """Initialize SQLite database and create tables if they don't exist"""
@@ -420,8 +438,11 @@ def subscribe(client: mqtt_client, topic: str):
                     chunk=None
                     chunk_part=None
                     #problemes, les chunk ont pas été recu
-        #TODO
-        # if (msg.topic==f"auth/zone/{EDGE_ID}"):      
+        if (msg.topic==f"auth/zone/{EDGE_ID}"):      
+            message_json=json.loads(msg.payload.decode())
+            parametre=message_json["parametre"]
+            #récupérer les paramètres de la zone
+            run_jar(["fog","init",EDGE_ID,parametre])
   
   
         if(msg.topic==f"video/upload/{EDGE_ID}"):
