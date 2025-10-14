@@ -535,12 +535,12 @@ def subscribe(client: mqtt_client, topic: str):
             if db_content["streamers"]:
                 # send db 
                 print("Envoie de la DB faite")
-                publish(client,f"db/{EDGE2_ID}/",db_json)
+                publish(client,f"db/{EDGE2_ID}",db_json)
             else:
                 print("On a pas de DB donc ff on envoie que c'est empty")
                 payload = json.dumps({'streamers' : "Empty"})
                 publish(client,f"db/{EDGE2_ID}/",payload)
-        if (msg.topic == f"db/{EDGE2_ID}/"):
+        if (msg.topic == f"db/{EDGE2_ID}"):
             message_json=json.loads(msg.payload.decode())
             if message_json['streamers'] == "Empty":
                 print("On ne fait rien, car on a reçu une BDD vide")
@@ -579,12 +579,12 @@ def run():
     subscribe(client, f"video/watch/{EDGE_ID}")
     
     print(f"Edge Cluster ID: {EDGE_ID}")
+    db_add_streamer("streamer1", "Streamer One")
+    db_add_video("video1", "Video One", "Description of Video One", "Category1", 1, "edge1,edge2", "thumbnail1.jpg", "streamer1")
 
 
     client.loop_forever()
 
-    #db_add_streamer("streamer1", "Streamer One")
-    #db_add_video("video1", "Video One", "Description of Video One", "Category1", 1, "edge1,edge2", "thumbnail1.jpg", "streamer1")
 
 if __name__ == '__main__':
     run()
