@@ -7,7 +7,7 @@ import datetime
 import uuid
 
 # MQTT Configuration
-BROKER = '10.246.146.52'
+BROKER = '192.168.2.54'
 PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 TOPIC_ID = f"auth/user/{EDGE_ID}/"
@@ -556,8 +556,8 @@ def premiere_connexion(client):
         'ID' : EDGE_ID,
     }
     payload_ID = json.dumps(payload)
-    publish(client,"auth/zone/",payload_ID)
-    publish(client,"db/",payload_ID)
+    publish(client,"auth/zone",payload_ID)
+    publish(client,"db",payload_ID)
 
 
 def run():
