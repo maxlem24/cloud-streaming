@@ -539,8 +539,8 @@ def subscribe(client: mqtt_client, topic: str):
             else:
                 print("On a pas de DB donc ff on envoie que c'est empty")
                 payload = json.dumps({'streamers' : "Empty"})
-                publish(client,f"db/{EDGE2_ID}/",payload)
-        if (msg.topic == f"db/{EDGE2_ID}"):
+                publish(client,f"db/{EDGE2_ID}",payload)
+        if (msg.topic == f"db/{EDGE_ID}"):
             message_json=json.loads(msg.payload.decode())
             if message_json['streamers'] == "Empty":
                 print("On ne fait rien, car on a reçu une BDD vide")
