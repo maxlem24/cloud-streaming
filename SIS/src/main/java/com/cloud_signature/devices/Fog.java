@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 import org.ejml.simple.SimpleMatrix;
 
@@ -18,6 +19,10 @@ import com.cloud_signature.utils.Globals;
 
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
+
+import java.util.Base64;
+import java.util.Base64.Encoder;
+import java.util.Base64.Decoder;
 
 // Noeud du fog qui vérifie les signatures et peut signer des données par délégation
 public class Fog implements Serializable {
@@ -54,13 +59,14 @@ public class Fog implements Serializable {
         Element r_prime = r_prime_left.mul(r_prime_right);
         Sign_params params = new Sign_params(v_prime, signed_data.getParamA(), r_prime);
         byte[] params_bytes = params.toString().getBytes();
-        
+
         Element w_1_prime = Globals.h2(params_bytes);
 
         return w_1_prime.isEqual(signed_data.getSign().getW_1());
     }
 
     public Signed_Data_Delegated[] delegated_sign(byte[] data) throws NoSuchAlgorithmException, NoDelegationException {
+        long timestamp = new Date().getTime();
         if (delegated_keys == null || delegatedOwner == null) {
             throw new NoDelegationException();
         }
@@ -85,12 +91,39 @@ public class Fog implements Serializable {
         byte[][] splited_data = Globals.split_data(data);
 
         for (int i = 0; i < Globals.n; i++) {
-            signed_data_tab[i] = new Signed_Data_Delegated(seed, delegatedOwner.getId_w(), v, sign, splited_data[i], i,
+            signed_data_tab[i] = new Signed_Data_Delegated(timestamp, seed, delegatedOwner.getId_w(), v, sign,
+                    splited_data[i], i,
                     delegatedOwner.getP_k(), id_d,
                     delegated_keys.getPk_d());
         }
 
         return signed_data_tab;
     }
+
+    public Fog(Element pk_s, byte[] id_d) {
+        this.id_d = id_d;
+        this.pk_s = pk_s;
+        this.delegated_keys = null;
+        this.delegatedOwner = null;
+    }
+
+    @Override
+    public String toString() {
+        Encoder encoder = Base64.getEncoder();
+        return String.format(
+                "%s:%s",
+                encoder.encodeToString(id_d),
+                encoder.encodeToString(pk_s.toBytes()));
+    }
+
+    public Fog(String str) {
+        String[] parts = str.split(":");
+
+        Decoder decoder = Base64.getDecoder();
+
+        this.id_d = decoder.decode(parts[0]);
+        this.pk_s = Globals.pk_sFromString(parts[1]);
+    }
+
 
 }

@@ -13,6 +13,7 @@ import java.util.Base64.Decoder;
 
 // Données signées contenant le message, la signature et tous les pautres aramètres pour la vérification
 public class Signed_Data {
+    private long timestamp; 
     private Gen_seed paramA;
     private byte[] id_w;
     private SimpleMatrix v;
@@ -21,7 +22,8 @@ public class Signed_Data {
     private int i;
     private Element pk_v;
 
-    public Signed_Data(Gen_seed paramA, byte[] id_w, SimpleMatrix v, Signature sign, byte[] d_i, int i, Element pk_v) {
+    public Signed_Data(long timestamp, Gen_seed paramA, byte[] id_w, SimpleMatrix v, Signature sign, byte[] d_i, int i, Element pk_v) {
+        this.timestamp = timestamp;
         this.paramA = paramA;
         this.id_w = id_w;
         this.v = v;
@@ -59,11 +61,16 @@ public class Signed_Data {
         return i;
     }
 
+    public long getTimestamp() {
+        return timestamp;
+    }
+
     @Override
     public String toString() {
         Encoder encoder = Base64.getEncoder();
 
-        return String.format("%s::%s::%s::%s::%s::%s::%s",
+        return String.format("%s::%s::%s::%s::%s::%s::%s::%s",
+                Long.toString(timestamp),
                 paramA.toString(),
                 encoder.encodeToString(id_w),
                 encoder.encodeToString(Globals.matrixToString(v).getBytes()),
@@ -77,12 +84,13 @@ public class Signed_Data {
         String[] parts = str.split("::");
         Decoder decoder = Base64.getDecoder();
 
-        this.paramA = new Gen_seed(parts[0]);
-        this.id_w = decoder.decode(parts[1]);
-        this.v = Globals.matrixFromString(new String(decoder.decode(parts[2])));
-        this.sign = new Signature(parts[3]);
-        this.d_i = decoder.decode(parts[4]);
-        this.i = Integer.parseInt(parts[5]);
-        this.pk_v = Globals.pairing.getG1().newElementFromBytes(decoder.decode(parts[6]));
+        this.timestamp = Long.parseLong(parts[0]);
+        this.paramA = new Gen_seed(parts[1]);
+        this.id_w = decoder.decode(parts[2]);
+        this.v = Globals.matrixFromString(new String(decoder.decode(parts[3])));
+        this.sign = new Signature(parts[4]);
+        this.d_i = decoder.decode(parts[5]);
+        this.i = Integer.parseInt(parts[6]);
+        this.pk_v = Globals.pairing.getG1().newElementFromBytes(decoder.decode(parts[7]));
     }
 }

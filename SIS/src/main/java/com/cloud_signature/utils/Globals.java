@@ -3,6 +3,9 @@ package com.cloud_signature.utils;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 
 import org.bouncycastle.jce.provider.JDKDSASigner.stdDSA;
 import org.ejml.simple.SimpleMatrix;
@@ -11,14 +14,32 @@ import com.cloud_signature.signature.Gen_seed;
 
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
+import it.unisa.dia.gas.jpbc.PairingParameters;
 import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
+import it.unisa.dia.gas.plaf.jpbc.pairing.parameters.PropertiesParameters;
 
 public class Globals {
-    public static Pairing pairing = PairingFactory.getPairing("curves\\a.properties");
+    // public static Pairing pairing = PairingFactory.getPairing();
     public static int l = 64;
     public static int m = 1536;
     public static int n = 8;
     public static int q = 4099;
+
+    public static Pairing pairing = createPairingFromProperties();
+    private static Pairing createPairingFromProperties() {
+        PropertiesParameters props = new PropertiesParameters();
+        props.put("type", "a");
+        props.put("q", "8780710799663312522437781984754049815806883199414208211028653399266475630880222957078625179422662221423155858769582317459277713367317481324925129998224791");
+        props.put("h", "12016012264891146079388821366740534204802954401251311822919615131047207289359704531102844802183906537786776");
+        props.put("r", "730750818665451621361119245571504901405976559617");
+        props.put("exp2", "159");
+        props.put("exp1", "107");
+        props.put("sign1", "1");
+        props.put("sign0", "1");
+        
+        return PairingFactory.getPairing(props);
+    }
+
     public static Element p = pairing.getG1().newElementFromBytes("Clément et Maxime à 2h de mat".getBytes());
 
     public final static Element h1(byte[] data) throws NoSuchAlgorithmException {
@@ -148,5 +169,17 @@ public class Globals {
                 res.set(i, j, Integer.parseInt(parts[2 + i * cols + j]));
 
         return res;
+    }
+
+    public final static String pk_sToString(Element pk_s) {
+        Encoder encoder = Base64.getEncoder();
+        String pk_String = encoder.encodeToString(pk_s.toBytes());
+        return pk_String;
+    }
+
+    public final static Element pk_sFromString(String s) {
+        Decoder decoder = Base64.getDecoder();
+        Element pk_s = Globals.pairing.getG1().newElementFromBytes(decoder.decode(s));
+        return pk_s;
     }
 }

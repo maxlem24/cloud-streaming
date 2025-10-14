@@ -14,6 +14,7 @@ import org.ejml.simple.SimpleMatrix;
 
 import com.cloud_signature.utils.Globals;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Base64.Encoder;
 import java.util.Base64.Decoder;
 
@@ -45,6 +46,7 @@ public class Owner {
     }
 
     public Signed_Data[] share_data(byte[] data) throws NoSuchAlgorithmException {
+        long timestamp = new Date().getTime();
         Gen_seed seed = new Gen_seed();
         SimpleMatrix v = Globals.calcV(seed, data);
 
@@ -65,7 +67,7 @@ public class Owner {
         byte[][] splited_data = Globals.split_data(data);
 
         for (int i = 0; i < Globals.n; i++) {
-            signed_data_tab[i] = new Signed_Data(seed, id_w, v, sign, splited_data[i], i, keys.getP_k());
+            signed_data_tab[i] = new Signed_Data(timestamp, seed, id_w, v, sign, splited_data[i], i, keys.getP_k());
         }
 
         return signed_data_tab;
@@ -80,22 +82,20 @@ public class Owner {
         return keys.getP_k();
     }
 
-
     @Override
     public String toString() {
         Encoder encoder = Base64.getEncoder();
         return String.format(
-            "%s::%s", 
-            encoder.encodeToString(id_w), 
-            keys.toString()
-        );
+                "%s::%s",
+                encoder.encodeToString(id_w),
+                keys.toString());
     }
 
     public Owner(String str) {
         String[] parts = str.split("::");
 
         Decoder decoder = Base64.getDecoder();
-        
+
         this.id_w = decoder.decode(parts[0]);
         this.keys = new KeyPair(parts[1]);
     }
