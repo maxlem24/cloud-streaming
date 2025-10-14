@@ -1,5 +1,4 @@
-if __name__ == '__main__':
-    run()
+
 
 import json
 from paho.mqtt import client as mqtt_client
@@ -23,7 +22,7 @@ DB_NAME = 'edge_cluster.db'
 JAR_PATH = "file.jar"  # chemin vers votre jar (ajustez si besoin)
 
 
-def run_jar(args: list, timeout: int = 10) -> Optional[str]:
+def run_jar(args: list, timeout: int = 10) -> str | None:
     """Run java -jar <JAR_PATH> <args...> and return stdout (str) or None on error."""
     cmd = ["java", "-jar", JAR_PATH] + args
     try:
@@ -104,3 +103,6 @@ def run():
     print(f"Edge Cluster ID: {EDGE_ID}")
 
     client.loop_forever()
+
+if __name__ == '__main__':
+    run()
