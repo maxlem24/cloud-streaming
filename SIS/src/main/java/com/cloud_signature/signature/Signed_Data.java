@@ -13,7 +13,7 @@ import java.util.Base64.Decoder;
 
 // Données signées contenant le message, la signature et tous les pautres aramètres pour la vérification
 public class Signed_Data {
-    private long timestamp; 
+    private long data_id; 
     private Gen_seed paramA;
     private byte[] id_w;
     private SimpleMatrix v;
@@ -22,8 +22,8 @@ public class Signed_Data {
     private int i;
     private Element pk_v;
 
-    public Signed_Data(long timestamp, Gen_seed paramA, byte[] id_w, SimpleMatrix v, Signature sign, byte[] d_i, int i, Element pk_v) {
-        this.timestamp = timestamp;
+    public Signed_Data(long data_id, Gen_seed paramA, byte[] id_w, SimpleMatrix v, Signature sign, byte[] d_i, int i, Element pk_v) {
+        this.data_id = data_id;
         this.paramA = paramA;
         this.id_w = id_w;
         this.v = v;
@@ -61,8 +61,8 @@ public class Signed_Data {
         return i;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getData_id() {
+        return data_id;
     }
 
     @Override
@@ -70,7 +70,7 @@ public class Signed_Data {
         Encoder encoder = Base64.getEncoder();
 
         return String.format("%s::%s::%s::%s::%s::%s::%s::%s",
-                Long.toString(timestamp),
+                Long.toString(data_id),
                 paramA.toString(),
                 encoder.encodeToString(id_w),
                 encoder.encodeToString(Globals.matrixToString(v).getBytes()),
@@ -84,7 +84,7 @@ public class Signed_Data {
         String[] parts = str.split("::");
         Decoder decoder = Base64.getDecoder();
 
-        this.timestamp = Long.parseLong(parts[0]);
+        this.data_id = Long.parseLong(parts[0]);
         this.paramA = new Gen_seed(parts[1]);
         this.id_w = decoder.decode(parts[2]);
         this.v = Globals.matrixFromString(new String(decoder.decode(parts[3])));

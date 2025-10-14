@@ -90,11 +90,12 @@ public class Main {
                                 "client verify <signed_data>\n" +
                                 "client merge <chemin/du/fichier>" +
                                 "fog init <identity> <server_keys>\n" +
-                                "fog verify <signature> <chemin/du/fichier>\n" +
+                                "fog verify <signed_data>\n" +
+                                "fog verify -f <chemin/du/fichier>\n" +
                                 // "fog sign_data <chemin/du/fichier>\n" +
                                 // "fog delegate_keys <owner_pubkey>\n" +
                                 "owner init <identity> <base64_keys>\n" +
-                                "owner sign <chemin/du/fichier>\n"
+                                "owner sign <chemin/du/fichier> <data_id>"
                 // "owner create_delegation <edge-id>"
                 );
                 return;
@@ -105,7 +106,7 @@ public class Main {
     public static void identification(String[] args) {
         if (args.length != 2) {
             System.err.println("Usage:\n" +
-                    "- identification <identity>");
+                    "identification <identity>");
             System.exit(1);
         }
 
@@ -170,7 +171,7 @@ public class Main {
                     if (length == 8) {
                         Signed_Data signed_data = new Signed_Data(signature);
                         System.out.println(client.verify_signature(signed_data)
-                                ? signed_data.getTimestamp() + " " + signed_data.getI()
+                                ? signed_data.getData_id() + " " + signed_data.getI()
                                 : "X");
                     } else if (length == 10) {
                         // TODO
@@ -197,12 +198,14 @@ public class Main {
                     File file = new File(file_path);
                     String[] input = Files.readString(file.toPath(), StandardCharsets.UTF_8)
                             .split("\n");
-
+                    Signed_Data[] signed_data_tab = new Signed_Data[Globals.n];
                     for (int i = 0; i < Globals.n; i++) {
                         Signed_Data sd = new Signed_Data(input[i].trim());
+                        signed_data_tab[sd.getI()] = sd;
+                    }
+                    for (Signed_Data sd : signed_data_tab) {
                         os.write(sd.getD_i());
                     }
-
                     byte output[] = os.toByteArray();
 
                     File file_out = File.createTempFile(randomChars(32), ".fmp4");
@@ -230,7 +233,7 @@ public class Main {
         if (args.length < 3) {
             System.err.println("Usage:\n" +
                     "owner init <identity> <base64_keys>\n" +
-                    "owner sign <chemin/du/fichier>\n"
+                    "owner sign <chemin/du/fichier> <data_id>"
             // "owner create_delegation <edge-id>"
             );
             System.exit(1);
@@ -262,9 +265,9 @@ public class Main {
                 return;
             }
             case "sign": {
-                if (args.length != 3) {
+                if (args.length != 4) {
                     System.err.println("Usage:\n" +
-                            "owner sign <chemin/du/fichier>");
+                            "owner sign <chemin/du/fichier> <data_id>");
                     System.exit(1);
                 }
                 try {
@@ -277,10 +280,11 @@ public class Main {
 
                 try {
                     String file_path = args[2];
+                    long data_id = Long.parseLong(args[3]);
                     File data_file = new File(file_path);
                     byte[] data = Files.readAllBytes(data_file.toPath());
 
-                    Signed_Data[] signed_data_tab = owner.share_data(data);
+                    Signed_Data[] signed_data_tab = owner.share_data(data, data_id);
                     for (Signed_Data sd : signed_data_tab) {
                         System.out.println(sd);
                         // System.out.println(sd.toString().equals(new
@@ -301,7 +305,7 @@ public class Main {
             default:
                 System.err.println(
                         "Usage:\n" +
-                                
+
                                 "owner init <identity> <base64_keys>\n" +
                                 "owner sign <chemin/du/fichier>");
                 return;
@@ -312,7 +316,8 @@ public class Main {
         if (args.length < 3) {
             System.err.println("Usage:\n" +
                     "fog init <identity> <server_keys>\n" +
-                    "fog verify <signed_data>");
+                    "fog verify <signed_data>\n" +
+                    "fog verify -f <chemin/du/fichier>");
             System.exit(1);
         }
 
@@ -344,40 +349,80 @@ public class Main {
                 return;
             }
             case "verify":
-                if (args.length != 3) {
-                    System.err.println("Usage:\n" +
-                            "fog verify <signed_data>");
-                    System.exit(1);
-                }
-
-                String signature = args[2].trim();
-
-                try {
-                    String str = Files.readString(file.toPath(), StandardCharsets.UTF_8);
-                    fog = new Fog(str);
-                    int length = signature.split("::").length;
-                    if (length == 8) {
-                        Signed_Data signed_data = new Signed_Data(signature);
-                        System.out.println(fog.verify_signature(signed_data) ?  signed_data.getI() : "X");
-                    } else if (length == 10) {
-                        // TODO
-                        System.err.println("Vérification de signature déléguée non implémentée");
-                        System.exit(1);
-                    } else {
-                        System.err.println("Signature invalide");
+                if (args[2].equals("-f")) {
+                    if (args.length != 4) {
+                        System.err.println("Usage:\n" +
+                                "fog verify -f <chemin/du/fichier>");
                         System.exit(1);
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+
+                    String file_path = args[3];
+                    try {
+                        String str = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+                        fog = new Fog(str);
+                        File data_file = new File(file_path);
+                        String[] signature_array = Files.readString(data_file.toPath(), StandardCharsets.UTF_8)
+                                .split("\n");
+                        for (String signature : signature_array) {
+                            int length = signature.split("::").length;
+                            if (length == 8) {
+                                Signed_Data signed_data = new Signed_Data(signature.trim());
+                                System.out.println(fog.verify_signature(signed_data)
+                                        ? signed_data.getData_id() + " " + signed_data.getI()
+                                        : "X");
+                            } else if (length == 10) {
+                                // TODO
+                                System.err.println("Vérification de signature déléguée non implémentée");
+                                System.exit(1);
+                            } else {
+                                System.err.println("Signature invalide");
+                                System.exit(1);
+                            }
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                } else {
+                    if (args.length != 3) {
+                        System.err.println("Usage:\n" +
+                                "fog verify <signed_data>");
+                        System.exit(1);
+                    }
+
+                    String signature = args[2];
+
+                    try {
+                        String str = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+                        fog = new Fog(str);
+                        int length = signature.split("::").length;
+                        if (length == 8) {
+                            Signed_Data signed_data = new Signed_Data(signature);
+                            System.out.println(fog.verify_signature(signed_data)
+                                    ? signed_data.getData_id() + " " + signed_data.getI()
+                                    : "X");
+                        } else if (length == 10) {
+                            // TODO
+                            System.err.println("Vérification de signature déléguée non implémentée");
+                            System.exit(1);
+                        } else {
+                            System.err.println("Signature invalide");
+                            System.exit(1);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
+
                 return;
 
             default:
                 System.err.println(
                         "Usage:\n" +
                                 "fog init <identity> <server_keys>\n" +
-                                "fog verify <signature> <chemin/du/fichier>"
-                );
+                                "fog verify <signature>\n" +
+                                "fog verify -f <chemin/du/fichier>");
                 return;
         }
     }

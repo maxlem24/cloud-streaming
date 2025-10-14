@@ -45,8 +45,7 @@ public class Owner {
         return new DelegationKeyPair(dk_d, pk_d);
     }
 
-    public Signed_Data[] share_data(byte[] data) throws NoSuchAlgorithmException {
-        long timestamp = new Date().getTime();
+    public Signed_Data[] share_data(byte[] data, long data_id) throws NoSuchAlgorithmException {
         Gen_seed seed = new Gen_seed();
         SimpleMatrix v = Globals.calcV(seed, data);
 
@@ -67,7 +66,7 @@ public class Owner {
         byte[][] splited_data = Globals.split_data(data);
 
         for (int i = 0; i < Globals.n; i++) {
-            signed_data_tab[i] = new Signed_Data(timestamp, seed, id_w, v, sign, splited_data[i], i, keys.getP_k());
+            signed_data_tab[i] = new Signed_Data(data_id, seed, id_w, v, sign, splited_data[i], i, keys.getP_k());
         }
 
         return signed_data_tab;
