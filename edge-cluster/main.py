@@ -525,7 +525,7 @@ def subscribe(client: mqtt_client, topic: str):
                 publish(client,f"video/watch/{EDGE_ID}/{client_id}", json.dumps({"video_nom":video_nom,"video_id":video_id,"chunk_part":chunk_part,"chunk":chunk,"end":"0"}))
 
 
-        if (msg.topic=="db/"):
+        if (msg.topic=="db"):
             db_content = db_export()
             db_json = json.dumps(db_content)
             message_json=json.loads(msg.payload.decode())
@@ -572,7 +572,7 @@ def run():
     subscribe(client, "video/request/ping")
     subscribe(client, f"live/upload/{EDGE_ID}")
 
-    subscribe(client, "video/upload/{EDGE_ID}")
+    subscribe(client, f"video/upload/{EDGE_ID}")
 
     subscribe(client, "db/update")
     subscribe(client, f"video/liste/{EDGE_ID}")
