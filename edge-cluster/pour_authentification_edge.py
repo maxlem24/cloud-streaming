@@ -6,6 +6,8 @@ from paho.mqtt import client as mqtt_client
 import uuid
 from supabase import create_client, Client
 import jwt
+import subprocess
+import requests
 
 url: str = "https://ipbcjhqfquwyitrxnemq.supabase.co/"
 key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwYmNqaHFmcXV3eWl0cnhuZW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0MTY4NzcsImV4cCI6MjA3NTk5Mjg3N30.rk6zV-GfcClHuykQ4QJ7fURztFy9JlQBP84V_u3I8rw"
@@ -17,6 +19,22 @@ PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 TOPIC_ID = f"auth/user/{EDGE_ID}/"
 DB_NAME = 'edge_cluster.db'
+
+JAR_PATH = "file.jar"  # chemin vers votre jar (ajustez si besoin)
+
+
+def run_jar(args: list, timeout: int = 10) -> Optional[str]:
+    """Run java -jar <JAR_PATH> <args...> and return stdout (str) or None on error."""
+    cmd = ["java", "-jar", JAR_PATH] + args
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
+        if proc.returncode != 0:
+            print(f"jar error rc={proc.returncode} stderr={proc.stderr.strip()}")
+            return None
+        return proc.stdout.strip()
+    except Exception as e:
+        print(f"failed to run jar: {e}")
+        return None
 
 def connect_mqtt():
     """Connect to MQTT broker"""
@@ -49,19 +67,20 @@ def subscribe(client: mqtt_client, topic: str):
             message_json=json.loads(msg.payload.decode())
             ID=message_json["ID"]
             #récupérer les paramètres de la zone
-            msg_a_envoyer={"param1":"param... A REMPLIR######################","status":"ok"}
+            code=run_jar(["identification",client_id])
+            msg_a_envoyer={"parametre":code,"status":"ok"}
             message_json=json.dumps(msg_a_envoyer)
             publish(client,f"auth/zone/{ID}", message_json)
         if (msg.topic=="auth/user"):
             message_json=json.loads(msg.payload.decode())
             jwt=message_json["jwt"]
-            try:
+            try:    
                 response = supabase.auth.get_claims(jwt)
                 client_id=response["claims"]["sub"]
-                #lancer jar de maxime
-                msg_a_envoyer={"status":"ok"}
+                code=run_jar(["identification",client_id])
+                msg_a_envoyer={"status":"ok","code":code}
             except Exception as e:
-                msg_a_envoyer={"status":"notok"}
+                msg_a_envoyer={"status":"jwterror","code":""}
 
             publish(client,f"auth/user/{client_id}", json.dumps(msg_a_envoyer))
     client.subscribe(topic)
