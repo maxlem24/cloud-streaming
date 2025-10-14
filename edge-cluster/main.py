@@ -202,7 +202,7 @@ def db_import(body) :
         print(s)
         db_add_streamer(s["id"], s["name"])
     for v in body["videos"] :
-        db_add_video(v["id"], v["title"], v["description"], v["category"], v["edges"], v["thumbnail"], s["id"])
+        db_add_video(v["id"], v["title"], v["description"], v["category"],v["live"], v["edges"], v["thumbnail"], s["id"])
         
 def db_get_video_by_id(video_id):
     """Retrieve a video by its ID"""
@@ -579,7 +579,7 @@ def run():
     subscribe(client, f"video/watch/{EDGE_ID}")
     
     print(f"Edge Cluster ID: {EDGE_ID}")
-    db_add_streamer("streamer1", "Streamer One")
+    db_add_streamer("streamer100", "Streamer One")
     db_add_video("video1", "Video One", "Description of Video One", "Category1", 1, "edge1,edge2", "thumbnail1.jpg", "streamer1")
 
 
