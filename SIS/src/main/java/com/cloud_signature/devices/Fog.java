@@ -1,5 +1,6 @@
 package com.cloud_signature.devices;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -19,7 +20,7 @@ import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 
 // Noeud du fog qui vérifie les signatures et peut signer des données par délégation
-public class Fog {
+public class Fog implements Serializable {
     private byte[] id_d;
     private Element pk_s;
     private DelegationKeyPair delegated_keys;
@@ -38,7 +39,9 @@ public class Fog {
     }
 
     public boolean verify_signature(Signed_Data signed_data) throws NoSuchAlgorithmException {
-        SimpleMatrix v_prime = Globals.getV(signed_data.getParamA(), signed_data.getData());
+        SimpleMatrix v_i = Globals.calcVi(signed_data.getParamA(), signed_data.getD_i());
+        SimpleMatrix v_prime = signed_data.getV();
+        v_prime.setColumn(signed_data.getI(), v_i);
 
         Pairing pairing = Globals.pairing;
         Element p = Globals.p.duplicate();
@@ -49,20 +52,20 @@ public class Fog {
                 .pairing(Globals.h1(signed_data.getId_w()), pk_prime.negate())
                 .mulZn(signed_data.getSign().getW_1());
         Element r_prime = r_prime_left.mul(r_prime_right);
-
         Sign_params params = new Sign_params(v_prime, signed_data.getParamA(), r_prime);
         byte[] params_bytes = params.toString().getBytes();
-
+        
         Element w_1_prime = Globals.h2(params_bytes);
+
         return w_1_prime.isEqual(signed_data.getSign().getW_1());
     }
 
-    public Signed_Data_Delegated delegated_sign(byte[] data) throws NoSuchAlgorithmException, NoDelegationException {
+    public Signed_Data_Delegated[] delegated_sign(byte[] data) throws NoSuchAlgorithmException, NoDelegationException {
         if (delegated_keys == null || delegatedOwner == null) {
             throw new NoDelegationException();
         }
         Gen_seed seed = new Gen_seed();
-        SimpleMatrix v = Globals.getV(seed, data);
+        SimpleMatrix v = Globals.calcV(seed, data);
 
         Pairing pairing = Globals.pairing;
         Element p = Globals.p.duplicate();
@@ -77,8 +80,17 @@ public class Fog {
         Element w_2 = delegated_keys.getDk_d().duplicate().mulZn(w_1).add(p_1.duplicate().mulZn(k));
 
         Signature sign = new Signature(w_1, w_2);
-        return new Signed_Data_Delegated(seed, delegatedOwner.getId_w(), v, sign, data, delegatedOwner.getP_k(), id_d,
-                delegated_keys.getPk_d());
+
+        Signed_Data_Delegated[] signed_data_tab = new Signed_Data_Delegated[Globals.n];
+        byte[][] splited_data = Globals.split_data(data);
+
+        for (int i = 0; i < Globals.n; i++) {
+            signed_data_tab[i] = new Signed_Data_Delegated(seed, delegatedOwner.getId_w(), v, sign, splited_data[i], i,
+                    delegatedOwner.getP_k(), id_d,
+                    delegated_keys.getPk_d());
+        }
+
+        return signed_data_tab;
     }
 
 }

@@ -1,5 +1,6 @@
 package com.cloud_signature.devices;
 
+import java.io.Serializable;
 import java.security.NoSuchAlgorithmException;
 
 import org.ejml.simple.SimpleMatrix;
@@ -14,14 +15,14 @@ import it.unisa.dia.gas.jpbc.Pairing;
 
 // Client final qui vérifie l'authenticité des données signées (avec ou sans délégation)
 public class Client {
-    private byte[] id_c;
 
-    public Client(byte[] id_c) {
-        this.id_c = id_c;
+    public Client() {
     }
 
     public boolean verify_signature(Signed_Data signed_data) throws NoSuchAlgorithmException {
-        SimpleMatrix v_prime = Globals.getV(signed_data.getParamA(), signed_data.getData());
+        SimpleMatrix v_i = Globals.calcVi(signed_data.getParamA(), signed_data.getD_i());
+        SimpleMatrix v_prime = signed_data.getV();
+        v_prime.setColumn(signed_data.getI(), v_i);
 
         Pairing pairing = Globals.pairing;
         Element p = Globals.p.duplicate();
@@ -41,7 +42,9 @@ public class Client {
     }
 
     public boolean verify_signature(Signed_Data_Delegated signed_data) throws NoSuchAlgorithmException {
-        SimpleMatrix v_prime = Globals.getV(signed_data.getParamA(), signed_data.getData());
+        SimpleMatrix v_i = Globals.calcVi(signed_data.getParamA(), signed_data.getD_i());
+        SimpleMatrix v_prime = signed_data.getV();
+        v_prime.setColumn(signed_data.getI(), v_i);
 
         Pairing pairing = Globals.pairing;
         Element p = Globals.p.duplicate();

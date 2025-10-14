@@ -37,7 +37,14 @@ public class Gen_seed {
 
     @Override
     public String toString() {
-        return String.format("%d|%d|%d", a, i_0, c_0);
+        return String.format("%d:%d:%d", a, i_0, c_0);
+    }
+
+    public Gen_seed(String str) {
+        String[] parts = str.split(":");
+        this.a = Integer.parseInt(parts[0]);
+        this.i_0 = Integer.parseInt(parts[1]);
+        this.c_0 = Integer.parseInt(parts[2]);
     }
 
 }
