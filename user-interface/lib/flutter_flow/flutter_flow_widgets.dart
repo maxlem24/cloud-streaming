@@ -55,14 +55,18 @@ class FFButtonWidget extends StatelessWidget {
     final child = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (icon != null)
+        if (icon != null) ...[
           Padding(
             padding: options.iconPadding,
             child: IconTheme.merge(
-              data: IconThemeData(color: options.iconColor ?? options.textStyle.color),
+              data: IconThemeData(
+                color: options.iconColor ?? options.textStyle.color,
+              ),
               child: icon!,
             ),
           ),
+          const SizedBox(width: 8),
+        ],
         Text(text, style: options.textStyle),
       ],
     );

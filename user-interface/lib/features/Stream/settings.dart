@@ -6,19 +6,12 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/widgets/app_sidebar.dart';
 import '/widgets/ui_atoms.dart';
 
-// TODO(PERMISSIONS): Implémenter les permissions caméra/micro
-// - Utiliser permission_handler package
-// - Demander les permissions au premier lancement
-// - Gérer le cas où l'utilisateur refuse
 
 // TODO(DEVICES): Implémenter la détection des devices
 // - Utiliser camera package pour lister les caméras
 // - Utiliser flutter_sound ou record package pour les micros
 // - Sauvegarder les préférences dans SharedPreferences ou DB
 
-// TODO(SETTINGS): Sauvegarder les paramètres dans la base de données
-// - Table user_settings { userId, cameraId, audioInputId, audioOutputId, quality }
-// - Sync avec le backend lors de la modification
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -30,7 +23,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // TODO(FETCH): Charger les devices disponibles au initState
+
   // @override
   // void initState() {
   //   super.initState();
@@ -38,8 +31,7 @@ class _SettingsPageState extends State<SettingsPage> {
   //   _loadUserSettings();
   // }
 
-  // ===== PLACEHOLDERS - À remplacer par de vraies données =====
-  // TODO(DATABASE): Charger depuis les préférences utilisateur
+
   String _selectedCamera = 'HD Webcam (Built-in)';
   String _selectedAudioInput = 'Microphone (Default)';
   String _selectedAudioOutput = 'Speakers (Default)';
@@ -49,7 +41,6 @@ class _SettingsPageState extends State<SettingsPage> {
   double _micVolume = 0.8;
 
   // TODO(API): Remplacer par les devices réels
-  // final cameras = await availableCameras();
   final List<String> _availableCameras = [
     'HD Webcam (Built-in)',
     'External USB Camera',
@@ -342,7 +333,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // TODO(AUDIO): Implémenter le test son
   void _playTestSound() {
-    // TODO: Jouer un son de test sur la sortie audio sélectionnée
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('TODO: Play test sound')),
     );
@@ -350,16 +340,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // TODO(DATABASE): Sauvegarder tous les paramètres
   void _saveSettings() {
-    // TODO: Sauvegarder dans la base de données
-    // await SettingsService.saveUserSettings({
-    //   'camera': _selectedCamera,
-    //   'audioInput': _selectedAudioInput,
-    //   'audioOutput': _selectedAudioOutput,
-    //   'quality': _streamQuality,
-    //   'echoCancellation': _enableEchoCancellation,
-    //   'noiseSuppression': _enableNoiseSuppression,
-    //   'micVolume': _micVolume,
-    // });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: FlutterFlowTheme.of(context).primary.withOpacity(.9),

@@ -38,6 +38,19 @@ dependencies:
   google_fonts: ^6.2.1
   provider: ^6.1.2
   file_picker: ^10.3.3
+  # help for signature
+  path_provider: ^2.1.1
+  # for streamer
+  # Permission handling for desktop
+  permission_handler: ^11.3.1
+  camera: ^0.10.5+5
+  # local storage for settings
+  shared_preferences: ^2.2.2
+  mqtt_client: ^10.11.1
+  # Authentification
+  supabase_flutter: ^2.3.4
+  flutter_dotenv: ^5.1.0
+
 
 
 dev_dependencies:
@@ -68,6 +81,8 @@ flutter:
      - assets/images/twinsa_logo_bg.png
      - assets/images/noises.jpg
      - assets/images/Home_page.jpg
+     - assets/cloud_signature-1.0-SNAPSHOT-jar-with-dependencies.jar
+     - .env
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

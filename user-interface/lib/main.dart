@@ -11,8 +11,44 @@ import 'features/Stream/live_page.dart';
 import 'features/Auth/profile.dart';
 import 'features/Stream/settings.dart';
 
-void main() {
+//Signature
+import 'dart:io';
+import 'signature/signature.dart';
+import 'package:path_provider/path_provider.dart';
+
+
+//BD
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Connect BD
+  await dotenv.load(fileName: ".env");
+  await Supabase.initialize(
+    url: dotenv.get('SUPABASE_URL'),
+    anonKey: dotenv.get('SUPABASE_ANON_KEY'),
+  );
+  //await PermissionService.ensurePermissions();
+
+  //final directory = await getApplicationDocumentsDirectory();
+
+  //var id = "abracadabra";
+  //var base64ID ="asM3qgVWaUD69mFRBNuuuVukvm8uCuHmPdCAdRTL1X+8dtmxHu2FMS+gT/yEsMBi8euJkJDHHawwR4T7A8RroVgerrHAJWvCwsJe8TChxQb3JvrpwatCVJYTiYebX3p0f/pGZL8z4g3DJbVngYnWXXivLMZ5xNOlsFp+wCvp2bw=:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQ2zDqW1lbnQgZXQgTWF4aW1lIMOgIDJoIGRlIG1hdAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  //await Signature.owner_init(id, base64ID);
+  //var result = await Signature.owner_sign("assets/images/noises.jpg");
+
+  //await Signature.writeTextFile('video.txt', result);
+
+  //var data1= result.split('\n')[1];
+  //var result_client = await Signature.client_verify(data1);
+  //var result_path = await Signature.client_merge('${directory.path}/video.txt');
+  // print(result_client);
+  //print(result_path);
+  //WidgetsFlutterBinding.ensureInitialized();
   runApp(const TwInsaApp());
 }
 
@@ -33,7 +69,7 @@ class TwInsaApp extends StatelessWidget {
         ),
         useMaterial3: false,
       ),
-      initialRoute: '/', // Home d’accueil
+      initialRoute: '/',
       routes: {
         '/': (_) => const HomepageWidget(),
         '/login': (_) => const LoginPage(),
@@ -42,8 +78,11 @@ class TwInsaApp extends StatelessWidget {
         '/videos': (_) => const VideoPage(),
         '/lives': (_) => const LivePage(),
         '/profile': (_) => const ProfilePage(),
-        '/settings': (_) =>const SettingsPage(),
+        '/settings': (_) => const SettingsPage(),
       },
     );
   }
 }
+
+
+

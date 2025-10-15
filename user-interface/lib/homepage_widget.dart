@@ -3,18 +3,12 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 import 'homepage_model.dart';
 export 'homepage_model.dart';
 
-// Page Route
-import 'features/Auth/signIN.dart';
-import 'features/Auth/logIn.dart';
-
 // Utilitaires
 import 'widgets/ui_atoms.dart';
-
 
 class CategoryItem {
   final String label;
@@ -33,25 +27,25 @@ const categories = <CategoryItem>[
     label: 'Gaming',
     live: '12.5K live',
     image:
-    'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80',
   ),
   CategoryItem(
     label: 'Art & Creative',
     live: '3.7K live',
     image:
-    'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
   ),
   CategoryItem(
     label: 'Music',
     live: '8.2K live',
     image:
-    'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1200&q=80',
   ),
   CategoryItem(
     label: 'Just Chatting',
     live: '15.8K live',
     image:
-    'https://images.unsplash.com/photo-1516245834210-c4c142787335?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1516245834210-c4c142787335?auto=format&fit=crop&w=1200&q=80',
   ),
 ];
 
@@ -108,7 +102,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                         height: 34,
                         width: 34,
                         errorBuilder: (_, __, ___) =>
-                        const SizedBox(width: 34, height: 34),
+                            const SizedBox(width: 34, height: 34),
                       ),
                       const SizedBox(width: 10),
                       GradientText(
@@ -153,8 +147,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                       ),
                       const SizedBox(width: 10),
                       FFButtonWidget(
-                        onPressed: () =>
-                            Navigator.pushNamed(context, '/login'),
+                        onPressed: () => Navigator.pushNamed(context, '/login'),
                         text: 'Log In',
                         options: FFButtonOptions(
                           height: 40,
@@ -203,7 +196,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                               stops: [0.65, 1.0],
                             ).createShader(rect),
                             child: Image.asset(
-                              'images/Home_page.jpg',
+                              'assets/images/Home_page.jpg',
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -225,11 +218,10 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                         Positioned.fill(
                           child: Center(
                             child: ConstrainedBox(
-                              constraints:
-                              const BoxConstraints(maxWidth: 1100),
+                              constraints: const BoxConstraints(maxWidth: 1100),
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
                                 child: GlassGradientBorder(
                                   radius: 24,
                                   innerPadding: const EdgeInsets.symmetric(
@@ -248,7 +240,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                           font: GoogleFonts.interTight(
                                             fontWeight: FontWeight.w900,
                                             fontStyle:
-                                            theme.displayLarge.fontStyle,
+                                                theme.displayLarge.fontStyle,
                                           ),
                                           color: theme.white,
                                           fontSize: 54,
@@ -261,8 +253,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                         child: Text(
                                           'Your Gateway to Live Entertainment',
                                           textAlign: TextAlign.center,
-                                          style:
-                                          theme.headlineMedium.override(
+                                          style: theme.headlineMedium.override(
                                             font: GoogleFonts.interTight(
                                               fontWeight: FontWeight.w500,
                                               fontStyle: theme
@@ -276,12 +267,12 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                       const SizedBox(height: 26),
                                       Row(
                                         mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                            MainAxisAlignment.center,
                                         children: [
                                           HoverScale(
                                             child: FFButtonWidget(
-                                              onPressed: () => debugPrint(
-                                                  'Start Streaming pressed'),
+                                              onPressed: () =>
+                                                  _requireSignIn(context),
                                               text: 'Start Streaming',
                                               icon: const Icon(
                                                   Icons.videocam_rounded,
@@ -289,38 +280,34 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                               options: FFButtonOptions(
                                                 height: 50,
                                                 padding:
-                                                const EdgeInsetsDirectional
-                                                    .fromSTEB(
-                                                    30, 0, 30, 0),
+                                                    const EdgeInsetsDirectional
+                                                        .fromSTEB(30, 0, 30, 0),
                                                 iconPadding:
-                                                const EdgeInsetsDirectional
-                                                    .fromSTEB(
-                                                    0, 0, 0, 0),
+                                                    const EdgeInsetsDirectional
+                                                        .fromSTEB(0, 0, 0, 0),
                                                 iconColor: theme.white,
                                                 color: theme.primary,
-                                                textStyle: theme
-                                                    .titleMedium
-                                                    .override(
+                                                textStyle:
+                                                    theme.titleMedium.override(
                                                   font: GoogleFonts.interTight(
-                                                    fontWeight:
-                                                    FontWeight.w700,
+                                                    fontWeight: FontWeight.w700,
                                                     fontStyle: theme
-                                                        .titleMedium
-                                                        .fontStyle,
+                                                        .titleMedium.fontStyle,
                                                   ),
                                                   color: theme.bg,
                                                 ),
                                                 elevation: 6,
                                                 borderRadius:
-                                                BorderRadius.circular(28),
+                                                    BorderRadius.circular(28),
                                               ),
                                             ),
                                           ),
                                           const SizedBox(width: 16),
                                           HoverScale(
                                             child: FFButtonWidget(
-                                              // CHANGEMENT ICI : pushNamed au lieu de pushReplacementNamed
-                                              onPressed: () => Navigator.pushNamed(context, '/catalogue'),
+                                              onPressed: () =>
+                                                  Navigator.pushNamed(
+                                                      context, '/catalogue'),
                                               text: 'Browse Streams',
                                               icon: const Icon(
                                                   Icons
@@ -329,24 +316,19 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                               options: FFButtonOptions(
                                                 height: 50,
                                                 padding:
-                                                const EdgeInsetsDirectional
-                                                    .fromSTEB(
-                                                    30, 0, 30, 0),
+                                                    const EdgeInsetsDirectional
+                                                        .fromSTEB(30, 0, 30, 0),
                                                 iconPadding:
-                                                const EdgeInsetsDirectional
-                                                    .fromSTEB(
-                                                    0, 0, 0, 0),
+                                                    const EdgeInsetsDirectional
+                                                        .fromSTEB(0, 0, 0, 0),
                                                 iconColor: theme.primary,
                                                 color: Colors.transparent,
-                                                textStyle: theme
-                                                    .titleMedium
-                                                    .override(
+                                                textStyle:
+                                                    theme.titleMedium.override(
                                                   font: GoogleFonts.interTight(
-                                                    fontWeight:
-                                                    FontWeight.w700,
+                                                    fontWeight: FontWeight.w700,
                                                     fontStyle: theme
-                                                        .titleMedium
-                                                        .fontStyle,
+                                                        .titleMedium.fontStyle,
                                                   ),
                                                   color: theme.primary,
                                                 ),
@@ -356,7 +338,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                                   width: 2,
                                                 ),
                                                 borderRadius:
-                                                BorderRadius.circular(28),
+                                                    BorderRadius.circular(28),
                                               ),
                                             ),
                                           ),
@@ -374,11 +356,9 @@ class _HomepageWidgetState extends State<HomepageWidget> {
 
                     // FEATURE BANNER
                     Padding(
-                      padding:
-                      const EdgeInsets.fromLTRB(20, 18, 20, 0),
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
                       child: ConstrainedBox(
-                        constraints:
-                        const BoxConstraints(maxWidth: 1100),
+                        constraints: const BoxConstraints(maxWidth: 1100),
                         child: HoverLift(
                           child: Glass(
                             radius: 18,
@@ -399,7 +379,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                         font: GoogleFonts.interTight(
                                           fontWeight: FontWeight.w700,
                                           fontStyle:
-                                          theme.titleMedium.fontStyle,
+                                              theme.titleMedium.fontStyle,
                                         ),
                                         color: theme.white,
                                       ),
@@ -410,10 +390,10 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                         'Stream and watch in crystal clear 4K resolution',
                                         style: theme.bodyMedium.override(
                                           font: GoogleFonts.inter(
-                                            fontWeight: theme
-                                                .bodyMedium.fontWeight,
-                                            fontStyle: theme
-                                                .bodyMedium.fontStyle,
+                                            fontWeight:
+                                                theme.bodyMedium.fontWeight,
+                                            fontStyle:
+                                                theme.bodyMedium.fontStyle,
                                           ),
                                           color: const Color(0xFFCDCDCD),
                                         ),
@@ -430,11 +410,9 @@ class _HomepageWidgetState extends State<HomepageWidget> {
 
                     // MAIN SECTION
                     Padding(
-                      padding:
-                      const EdgeInsets.fromLTRB(20, 40, 20, 40),
+                      padding: const EdgeInsets.fromLTRB(20, 40, 20, 40),
                       child: ConstrainedBox(
-                        constraints:
-                        const BoxConstraints(maxWidth: 1200),
+                        constraints: const BoxConstraints(maxWidth: 1200),
                         child: Column(
                           children: [
                             // Why Choose
@@ -446,8 +424,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                   style: theme.headlineLarge.override(
                                     font: GoogleFonts.interTight(
                                       fontWeight: FontWeight.w800,
-                                      fontStyle:
-                                      theme.headlineLarge.fontStyle,
+                                      fontStyle: theme.headlineLarge.fontStyle,
                                     ),
                                     color: theme.white,
                                   ),
@@ -456,7 +433,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                 GridView(
                                   padding: EdgeInsets.zero,
                                   gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 3,
                                     crossAxisSpacing: 24,
                                     mainAxisSpacing: 24,
@@ -464,29 +441,28 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                   ),
                                   primary: false,
                                   shrinkWrap: true,
-                                  physics:
-                                  const NeverScrollableScrollPhysics(),
+                                  physics: const NeverScrollableScrollPhysics(),
                                   children: [
                                     _featureCard(
                                       context,
                                       icon: Icons.flash_on_rounded,
                                       title: 'Low Latency',
                                       subtitle:
-                                      'Real-time interaction with minimal delay',
+                                          'Real-time interaction with minimal delay',
                                     ),
                                     _featureCard(
                                       context,
                                       icon: Icons.people_rounded,
                                       title: 'Global Community',
                                       subtitle:
-                                      'Connect with millions of viewers worldwide',
+                                          'Connect with millions of viewers worldwide',
                                     ),
                                     _featureCard(
                                       context,
                                       icon: Icons.privacy_tip,
                                       title: 'Safe Environment',
                                       subtitle:
-                                      'Be safe thank to end-to-end encrypted data',
+                                          'Be safe thank to end-to-end encrypted data',
                                     ),
                                   ],
                                 ),
@@ -504,8 +480,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                   style: theme.headlineLarge.override(
                                     font: GoogleFonts.interTight(
                                       fontWeight: FontWeight.w800,
-                                      fontStyle:
-                                      theme.headlineLarge.fontStyle,
+                                      fontStyle: theme.headlineLarge.fontStyle,
                                     ),
                                     color: theme.white,
                                   ),
@@ -514,7 +489,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                 GridView.builder(
                                   padding: EdgeInsets.zero,
                                   gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 4,
                                     crossAxisSpacing: 16,
                                     mainAxisSpacing: 16,
@@ -522,8 +497,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                   ),
                                   primary: false,
                                   shrinkWrap: true,
-                                  physics:
-                                  const NeverScrollableScrollPhysics(),
+                                  physics: const NeverScrollableScrollPhysics(),
                                   itemCount: categories.length,
                                   itemBuilder: (context, i) {
                                     final c = categories[i];
@@ -557,8 +531,8 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                       style: theme.headlineMedium.override(
                                         font: GoogleFonts.interTight(
                                           fontWeight: FontWeight.w800,
-                                          fontStyle: theme
-                                              .headlineMedium.fontStyle,
+                                          fontStyle:
+                                              theme.headlineMedium.fontStyle,
                                         ),
                                         color: theme.white,
                                       ),
@@ -571,10 +545,10 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                         textAlign: TextAlign.center,
                                         style: theme.bodyLarge.override(
                                           font: GoogleFonts.inter(
-                                            fontWeight: theme
-                                                .bodyLarge.fontWeight,
-                                            fontStyle: theme
-                                                .bodyLarge.fontStyle,
+                                            fontWeight:
+                                                theme.bodyLarge.fontWeight,
+                                            fontStyle:
+                                                theme.bodyLarge.fontStyle,
                                           ),
                                           color: const Color(0xFFCDCDCD),
                                         ),
@@ -583,57 +557,93 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                     const SizedBox(height: 22),
                                     Row(
                                       mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                          MainAxisAlignment.center,
                                       children: [
                                         FFButtonWidget(
-                                          onPressed: () => debugPrint(
-                                              'Create Account pressed'),
+                                          onPressed: () => Navigator.pushNamed(
+                                              context, '/signin'),
                                           text: 'Create Account',
                                           options: FFButtonOptions(
                                             height: 50,
-                                            padding:
-                                            const EdgeInsetsDirectional
-                                                .fromSTEB(
-                                                30, 0, 30, 0),
+                                            padding: const EdgeInsetsDirectional
+                                                .fromSTEB(30, 0, 30, 0),
                                             iconPadding: EdgeInsets.zero,
                                             color: theme.primary,
-                                            textStyle: theme
-                                                .titleMedium
-                                                .override(
+                                            textStyle:
+                                                theme.titleMedium.override(
                                               font: GoogleFonts.interTight(
                                                 fontWeight: FontWeight.w700,
-                                                fontStyle: theme
-                                                    .titleMedium
-                                                    .fontStyle,
+                                                fontStyle:
+                                                    theme.titleMedium.fontStyle,
                                               ),
                                               color: theme.bg,
                                             ),
                                             elevation: 6,
                                             borderRadius:
-                                            BorderRadius.circular(28),
+                                                BorderRadius.circular(28),
                                           ),
                                         ),
                                         const SizedBox(width: 16),
                                         FFButtonWidget(
-                                          onPressed: () => debugPrint(
-                                              'Learn More pressed'),
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                backgroundColor: theme.bgSoft
+                                                    .withOpacity(0.9),
+                                                shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            16)),
+                                                title: Text(
+                                                  "About TW'INSA",
+                                                  style:
+                                                      theme.titleLarge.override(
+                                                    color: theme.white,
+                                                    font:
+                                                        GoogleFonts.interTight(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w700),
+                                                  ),
+                                                ),
+                                                content: Text(
+                                                  "TW'INSA is an open-source live and video streaming platform, "
+                                                  "created as a final-year project by INSA Hauts-de-France students "
+                                                  "in Informatics and Cybersecurity.",
+                                                  style:
+                                                      theme.bodyMedium.override(
+                                                    color: theme.white
+                                                        .withOpacity(.85),
+                                                  ),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(context),
+                                                    child: Text(
+                                                      "Close",
+                                                      style: TextStyle(
+                                                          color: theme.primary),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
                                           text: 'Learn More',
                                           options: FFButtonOptions(
                                             height: 50,
-                                            padding:
-                                            const EdgeInsetsDirectional
-                                                .fromSTEB(
-                                                30, 0, 30, 0),
+                                            padding: const EdgeInsetsDirectional
+                                                .fromSTEB(30, 0, 30, 0),
                                             iconPadding: EdgeInsets.zero,
                                             color: Colors.transparent,
-                                            textStyle: theme
-                                                .titleMedium
-                                                .override(
+                                            textStyle:
+                                                theme.titleMedium.override(
                                               font: GoogleFonts.interTight(
                                                 fontWeight: FontWeight.w700,
-                                                fontStyle: theme
-                                                    .titleMedium
-                                                    .fontStyle,
+                                                fontStyle:
+                                                    theme.titleMedium.fontStyle,
                                               ),
                                               color: theme.primary,
                                             ),
@@ -643,7 +653,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                               width: 2,
                                             ),
                                             borderRadius:
-                                            BorderRadius.circular(28),
+                                                BorderRadius.circular(28),
                                           ),
                                         ),
                                       ],
@@ -659,11 +669,9 @@ class _HomepageWidgetState extends State<HomepageWidget> {
 
                     // FOOTER
                     Padding(
-                      padding:
-                      const EdgeInsets.fromLTRB(20, 0, 20, 26),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 26),
                       child: ConstrainedBox(
-                        constraints:
-                        const BoxConstraints(maxWidth: 1100),
+                        constraints: const BoxConstraints(maxWidth: 1100),
                         child: Glass(
                           radius: 20,
                           padding: const EdgeInsets.all(32),
@@ -675,8 +683,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                 style: theme.headlineMedium.override(
                                   font: GoogleFonts.interTight(
                                     fontWeight: FontWeight.w800,
-                                    fontStyle:
-                                    theme.headlineMedium.fontStyle,
+                                    fontStyle: theme.headlineMedium.fontStyle,
                                   ),
                                   color: theme.white,
                                 ),
@@ -689,10 +696,8 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                   textAlign: TextAlign.center,
                                   style: theme.bodyLarge.override(
                                     font: GoogleFonts.inter(
-                                      fontWeight:
-                                      theme.bodyLarge.fontWeight,
-                                      fontStyle:
-                                      theme.bodyLarge.fontStyle,
+                                      fontWeight: theme.bodyLarge.fontWeight,
+                                      fontStyle: theme.bodyLarge.fontStyle,
                                     ),
                                     color: const Color(0xFFCDCDCD),
                                   ),
@@ -714,11 +719,11 @@ class _HomepageWidgetState extends State<HomepageWidget> {
   }
 
   Widget _featureCard(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        required String subtitle,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
     final theme = FlutterFlowTheme.of(context);
     return HoverLift(
       child: Glass(
@@ -766,11 +771,11 @@ class _HomepageWidgetState extends State<HomepageWidget> {
   }
 
   Widget _categoryTile(
-      BuildContext context, {
-        required String label,
-        required String live,
-        required String image,
-      }) {
+    BuildContext context, {
+    required String label,
+    required String live,
+    required String image,
+  }) {
     final theme = FlutterFlowTheme.of(context);
     return HoverScale(
       child: Container(
@@ -802,7 +807,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                 return Container(
                   color: theme.bg,
                   alignment: Alignment.center,
-                  child:  Icon(Icons.broken_image, color: theme.white),
+                  child: Icon(Icons.broken_image, color: theme.white),
                 );
               },
             ),
@@ -824,11 +829,15 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
                         gradient: LinearGradient(
-                          colors: [theme.bg.withOpacity(.75), theme.bg.withOpacity(.45)],
+                          colors: [
+                            theme.bg.withOpacity(.75),
+                            theme.bg.withOpacity(.45)
+                          ],
                         ),
                         border: Border.all(color: theme.white.withOpacity(.12)),
                       ),
@@ -861,7 +870,8 @@ class _HomepageWidgetState extends State<HomepageWidget> {
             IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: theme.white.withOpacity(.07), width: 1),
+                  border:
+                      Border.all(color: theme.white.withOpacity(.07), width: 1),
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
@@ -871,4 +881,44 @@ class _HomepageWidgetState extends State<HomepageWidget> {
       ),
     );
   }
+}
+
+// widget for request sign in
+Future<void> _requireSignIn(BuildContext context) async {
+  final theme = FlutterFlowTheme.of(context);
+
+  await showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: theme.bgSoft.withValues(alpha: 0.9),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(
+        "Sign in required",
+        style: theme.titleLarge.override(
+          color: theme.white,
+          font: GoogleFonts.interTight(fontWeight: FontWeight.w700),
+        ),
+      ),
+      content: Text(
+        "To start a stream, you need to sign in first.",
+        style: theme.bodyMedium.override(
+          color: theme.white.withOpacity(.8),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text("Cancel",
+              style: TextStyle(color: theme.white.withValues(alpha: 0.7))),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/signin');
+          },
+          child: Text("Sign in", style: TextStyle(color: theme.primary)),
+        ),
+      ],
+    ),
+  );
 }

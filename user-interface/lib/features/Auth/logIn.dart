@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -11,6 +12,9 @@ import 'widgets/auth_shared_widget.dart';
 import 'widgets/reset_password.dart';
 import 'signIN.dart';
 
+
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../services/auth_service.dart';
 
 typedef _HeroPanel = AuthHeroPanel;
 typedef _TextField = AuthTextField;
@@ -39,12 +43,52 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscure = true;
   bool _keepLogged = true;
 
+  bool _loading = false;
+  String? _error;
+
   @override
   void dispose() {
     _model.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      await AuthService.instance.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session?.user != null) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed('/catalogue');
+      } else {
+        if (!mounted) return;
+        _error = "Échec de l'authentification.";
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      _error = e.message;
+    } catch (e) {
+      if (!mounted) return;
+      _error = 'Une erreur est survenue. Réessaie.';
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -86,7 +130,13 @@ class _LoginPageState extends State<LoginPage> {
                                 controller: _emailController,
                                 label: 'Email Address',
                                 keyboardType: TextInputType.emailAddress,
-                                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                                validator: (v) {
+                                  final value = v?.trim() ?? '';
+                                  if (value.isEmpty) return 'Required';
+                                  final ok = RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(value);
+                                  if (!ok) return 'Invalid email';
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 12),
                               _TextField(
@@ -95,9 +145,18 @@ class _LoginPageState extends State<LoginPage> {
                                 obscure: _obscure,
                                 suffix: IconButton(
                                   onPressed: () => setState(() => _obscure = !_obscure),
-                                  icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
-                                      size: 18, color: theme.bodySmall.color),
+                                  icon: Icon(
+                                    _obscure ? Icons.visibility_off : Icons.visibility,
+                                    size: 18,
+                                    color: theme.bodySmall.color,
+                                  ),
                                 ),
+                                validator: (v) {
+                                  final value = v ?? '';
+                                  if (value.isEmpty) return 'Required';
+                                  if (value.length < 8) return 'At least 8 characters';
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 8),
                               Row(
@@ -121,34 +180,36 @@ class _LoginPageState extends State<LoginPage> {
                                 ],
                               ),
                               const SizedBox(height: 10),
+                              if (_error != null) ...[
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                                ),
+                              ],
+
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: [ FFButtonWidget(
-                                text: 'Log In',
-                                onPressed: () {
-                                  if (!_formKey.currentState!.validate()) return;
-                                  // TODO: Log the user in redirection
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Log in tapped')),
-                                  );
-                                },
-                                options: FFButtonOptions(
-                                  height: 35,
-                                  padding: const EdgeInsets.symmetric(horizontal:60),
-                                  iconPadding: EdgeInsets.zero,
-                                  color: theme.primary,
-                                  textStyle: FlutterFlowTheme.of(context).titleSmall.override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FontWeight.w600,
-                                      fontStyle: FlutterFlowTheme.of(context).titleSmall.fontStyle,
+                                children: [
+                                  FFButtonWidget(
+                                    text: _loading ? '...' : 'Log In',
+                                    onPressed: _loading ? null : _handleLogin,
+                                    options: FFButtonOptions(
+                                      height: 35,
+                                      padding: const EdgeInsets.symmetric(horizontal: 60),
+                                      iconPadding: EdgeInsets.zero,
+                                      color: theme.primary,
+                                      textStyle: FlutterFlowTheme.of(context).titleSmall.override(
+                                        font: GoogleFonts.inter(
+                                          fontWeight: FontWeight.w600,
+                                          fontStyle: FlutterFlowTheme.of(context).titleSmall.fontStyle,
+                                        ),
+                                      ),
+                                      elevation: 2,
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(color: Colors.white.withOpacity(.12)),
                                     ),
                                   ),
-                                  elevation: 2,
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(color: Colors.white.withOpacity(.12)),
-                                ),
-                              ),
-                            ],
+                                ],
                               ),
                               const SizedBox(height: 14),
                               Row(
@@ -157,7 +218,13 @@ class _LoginPageState extends State<LoginPage> {
                                   Text("Don't have an account? ", style: theme.bodySmall),
                                   InkWell(
                                     onTap: () => Navigator.of(context).pushReplacementNamed(SignINPage.routePath),
-                                    child: Text('Create account', style: theme.bodySmall.override(color: theme.primary, decoration: TextDecoration.underline)),
+                                    child: Text(
+                                      'Create account',
+                                      style: theme.bodySmall.override(
+                                        color: theme.primary,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
                                   )
                                 ],
                               ),
@@ -172,13 +239,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-          // Right hero panel (si tu veux en remettre un)
-          // const Expanded(
-          //   child: _HeroPanel(
-          //     headline: 'Welcome\nback!',
-          //     subhead: 'Jump into your dashboard and\nstart streaming live.',
-          //   ),
-          // ),
         ],
       ),
     );
