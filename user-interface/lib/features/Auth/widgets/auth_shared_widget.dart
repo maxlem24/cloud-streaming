@@ -23,7 +23,7 @@ class AuthHeroPanel extends StatelessWidget {
           decoration:  BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft, end: Alignment.bottomRight,
-              colors: [//Color(0xFF11111A),
+              colors: [
                 theme.primary,
                theme.bgSoft,
                 theme.primary,],

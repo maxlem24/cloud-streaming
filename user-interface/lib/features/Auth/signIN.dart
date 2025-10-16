@@ -11,11 +11,12 @@ import 'widgets/auth_shared_widget.dart';
 import 'widgets/terms_privPolicy.dart';
 import 'logIn.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../services/auth_service.dart';
+
 typedef _HeroPanel = AuthHeroPanel;
 typedef _TextField = AuthTextField;
-typedef _OrDivider = AuthOrDivider;
-typedef _SocialButton = AuthSocialButton;
-typedef _SocialIconButton = AuthSocialIconButton;
+
 
 // ============================
 //   SIGN IN PAGE
@@ -34,19 +35,57 @@ class _SignINPageState extends State<SignINPage> {
   late final _model = SignINModel();
 
   final _formKey = GlobalKey<FormState>();
-  final _firstController = TextEditingController();
-  final _lastController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
   bool _obscure = true;
   bool _agree = true;
 
+  bool _loading = false;
+  String? _error;
+
+  Future<void> _handleSignIn() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      await AuthService.instance.signUpWithEmail(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        username: _usernameController.text
+      );
+
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session?.user != null) {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed('/catalogue');
+      } else {
+        if (!mounted) return;
+        _error = "Échec de l'inscription.";
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      _error = e.message;
+    } catch (e) {
+      if (!mounted) return;
+      _error = 'Une erreur est survenue. Réessaie.';
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _model.dispose();
-    _firstController.dispose();
-    _lastController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -90,22 +129,6 @@ class _SignINPageState extends State<SignINPage> {
                             children: [
                               Text('Create Account', style: theme.titleLarge),
                               const SizedBox(height: 18),
-                              Row(children: [
-                                Expanded(
-                                    child: _TextField(
-                                  controller: _firstController,
-                                  label: 'First name',
-                                  validator: _required,
-                                )),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                    child: _TextField(
-                                  controller: _lastController,
-                                  label: 'Last name',
-                                  validator: _required,
-                                )),
-                              ]),
-                              const SizedBox(height: 12),
                               _TextField(
                                 controller: _usernameController,
                                 label: 'Username',
@@ -153,7 +176,7 @@ class _SignINPageState extends State<SignINPage> {
                                             },
                                             side: BorderSide(color: theme.primary.withOpacity(.3)),
                                             fillColor: MaterialStateProperty.all(theme.primary),
-                                            checkColor: Colors.white,
+                                            checkColor: theme.white,
                                           ),
                                           Wrap(
                                             crossAxisAlignment: WrapCrossAlignment.center,
@@ -161,9 +184,8 @@ class _SignINPageState extends State<SignINPage> {
                                               Text('I agree with ', style: theme.bodySmall),
                                               InkWell(
                                                 onTap: () => showLegalPanel(context).then((_) {
-                                                  // optionnel: cocher auto après fermeture du panneau
                                                   setState(() => _agree = true);
-                                                  state.didChange(true); // <— synchronise la validation
+                                                  state.didChange(true);
                                                 }),
                                                 child: Text(
                                                   'Terms and Privacy Policy',
@@ -191,37 +213,22 @@ class _SignINPageState extends State<SignINPage> {
                               ),
                               const SizedBox(height: 10),
                               FFButtonWidget(
-                                text: 'Create Account',
-                                onPressed: () {
-                                  if (!_formKey.currentState!.validate()) return;
-                                  // TODO: sign in the user
-                                  // TODO : help the redirection to catalogue_page.dart
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Sign IN tapped')),
-                                  );
-                                },
+                                text: _loading ? '...' : 'Create account',
+                                onPressed: _loading ? null : _handleSignIn,
                                 options: FFButtonOptions(
                                   height: 35,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 60),
+                                  padding: const EdgeInsets.symmetric(horizontal: 60),
                                   iconPadding: EdgeInsets.zero,
                                   color: theme.primary,
-                                  textStyle: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .override(
-                                        font: GoogleFonts.inter(
-                                          fontWeight: FontWeight.w600,
-                                          fontStyle:
-                                              FlutterFlowTheme.of(context)
-                                                  .titleSmall
-                                                  .fontStyle,
-                                        ),
-                                      ),
+                                  textStyle: FlutterFlowTheme.of(context).titleSmall.override(
+                                    font: GoogleFonts.inter(
+                                      fontWeight: FontWeight.w600,
+                                      fontStyle: FlutterFlowTheme.of(context).titleSmall.fontStyle,
+                                    ),
+                                  ),
                                   elevation: 2,
                                   borderRadius: BorderRadius.circular(10),
-                                  borderSide: BorderSide(
-                                      color: Colors.white.withOpacity(.12)),
+                                  borderSide: BorderSide(color: theme.white.withOpacity(.12)),
                                 ),
                               ),
                               const SizedBox(height: 14),
@@ -266,7 +273,7 @@ class _SignINPageState extends State<SignINPage> {
   }
 
   String? _password(String? v) =>
-      (v != null && v.length >= 6) ? null : 'Min 6 characters';
+      (v != null && v.length >= 8) ? null : 'Min 8 characters';
 }
 
 class SignINModel extends FlutterFlowModel<SignINPage> {}

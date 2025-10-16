@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:twinsa/widgets/splash_screen.dart';
 import 'flutter_flow/flutter_flow_theme.dart';
 
 // Pages
@@ -69,8 +70,10 @@ class TwInsaApp extends StatelessWidget {
         ),
         useMaterial3: false,
       ),
-      initialRoute: '/',
+      initialRoute: SplashScreen.routePath,
       routes: {
+        SplashScreen.routePath: (_) => const SplashScreen(),
+        // App routes
         '/': (_) => const HomepageWidget(),
         '/login': (_) => const LoginPage(),
         '/signin': (_) => const SignINPage(),

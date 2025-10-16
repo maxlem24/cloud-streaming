@@ -18,9 +18,7 @@ import '../../services/auth_service.dart';
 
 typedef _HeroPanel = AuthHeroPanel;
 typedef _TextField = AuthTextField;
-typedef _OrDivider = AuthOrDivider;
-typedef _SocialButton = AuthSocialButton;
-typedef _SocialIconButton = AuthSocialIconButton;
+
 
 // ============================
 //  LOGIN PAGE

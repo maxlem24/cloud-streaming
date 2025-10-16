@@ -23,6 +23,7 @@ class AuthService extends ChangeNotifier {
 
   String? get userEmail => currentUser?.email;
 
+  String? get userUsername => currentUser?.userMetadata?['username'] as String?;
 
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 
@@ -39,6 +40,7 @@ class AuthService extends ChangeNotifier {
   }
 
 
+
   Future<AuthResponse> signInWithPassword({
     required String email,
     required String password,
@@ -51,6 +53,25 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
       return response;
     } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<AuthResponse> signUpWithEmail({
+    required String email,
+    required String username,
+    required String password,
+}) async {
+    try {
+      final response = await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {'username': username},
+      );
+      notifyListeners();
+      return response;
+    }
+    catch (e) {
       rethrow;
     }
   }

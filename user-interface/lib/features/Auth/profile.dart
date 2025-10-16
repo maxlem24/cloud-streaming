@@ -22,15 +22,17 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   Uint8List? _avatarBytes;
 
-  final _username = TextEditingController(text: 'EpicGamer');
+
   final _bio = TextEditingController(text: 'Just streaming for fun 🎮');
   final _liveTitle = TextEditingController(text: 'My Awesome Stream');
 
   final TextEditingController _emailCtrl = TextEditingController(text: '');
+  final TextEditingController _usernameCtrl = TextEditingController(text: '');
   bool _loading = true;
   bool get _isLoggedIn => _email?.isNotEmpty == true;
 
   String? _email;
+  String? _username;
 
 
   @override
@@ -45,6 +47,8 @@ class _ProfilePageState extends State<ProfilePage> {
     final user = AuthService.instance.currentUser;
     _email = user?.email;
     _emailCtrl.text = _email ?? '';
+    _username = user?.userMetadata?['username'] as String?;
+    _usernameCtrl.text = _username ?? '';
     setState(() {
       _loading = false;
     });
@@ -70,7 +74,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void dispose() {
-    _username.dispose();
     _bio.dispose();
     _liveTitle.dispose();
     _emailCtrl.dispose();
@@ -166,7 +169,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                         ),
                                         const SizedBox(height: 12),
                                         Text(
-                                          '@${_username.text}',
+                                          _username!,
                                           style: GoogleFonts.inter(
                                             color: theme.accent,
                                             fontSize: 16,
@@ -188,7 +191,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   const SizedBox(height: 18),
                                   _ProfileInput(
                                     label: 'Username',
-                                    controller: _username,
+                                    controller: _usernameCtrl,
                                     hint: 'Your username',
                                     theme: theme,
                                   ),
