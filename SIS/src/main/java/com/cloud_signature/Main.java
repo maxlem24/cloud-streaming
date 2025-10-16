@@ -208,7 +208,7 @@ public class Main {
                     }
                     byte output[] = os.toByteArray();
 
-                    File file_out = File.createTempFile(randomChars(32), ".fmp4");
+                    File file_out = File.createTempFile(randomChars(32), ".png");
                     System.out.println(file_out.getAbsolutePath());
 
                     FileOutputStream stream = new FileOutputStream(file_out);
