@@ -203,6 +203,7 @@ def publish_status(client, status_data,CLIENT_ID):
     """
     topic = f"video/request/ping/{CLIENT_ID}"
     message_json = json.dumps(status_data)
+    print(f"statusdata: {status_data}")
     
     try:
         result = client.publish(topic, message_json)
@@ -600,7 +601,6 @@ def run():
     subscribe(client, "db/update")
     subscribe(client, f"video/liste/{EDGE_ID}")
     subscribe(client, f"video/watch/{EDGE_ID}")
-    publish(client,f"user/abla", json.dumps({"yolo":"yoloswaaag"}))
     print(f"Edge Cluster ID: {EDGE_ID}")
 
 
