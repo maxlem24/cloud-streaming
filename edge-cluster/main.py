@@ -9,7 +9,7 @@ import uuid
 import subprocess
 
 # MQTT Configuration
-BROKER = '10.199.58.234'
+BROKER = '172.20.10.4'
 PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 TOPIC_ID = f"auth/user/{EDGE_ID}/"
@@ -196,12 +196,12 @@ def save_status_to_json(status_data, filename="edge_status.json"):
         print(f"Error saving to JSON file: {e}")
         return False
 
-def publish_status(client, status_data):
+def publish_status(client, status_data,CLIENT_ID):
     """
     Publish status data to the correct MQTT topic
     Topic format: video/request/ping/{EDGE_ID}
     """
-    topic = f"video/request/ping/{EDGE_ID}"
+    topic = f"video/request/ping/{CLIENT_ID}"
     message_json = json.dumps(status_data)
     
     try:
@@ -395,6 +395,7 @@ def subscribe(client: mqtt_client, topic: str):
     def on_message(client, userdata, msg):
         print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
         if (msg.topic == "video/request/ping"):
+            CLIENT_ID=json.loads(msg.payload.decode())["client_id"]
             # Get current system status
             status_data = get_system_status()
             
@@ -402,7 +403,7 @@ def subscribe(client: mqtt_client, topic: str):
             save_status_to_json(status_data)
             
             # Publish status data to the correct topic
-            publish_status(client, status_data)
+            publish_status(client, status_data,CLIENT_ID)
             
         if (msg.topic==f"live/upload/{EDGE_ID}"):
             message_json=json.loads(msg.payload.decode())
