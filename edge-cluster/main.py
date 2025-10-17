@@ -6,9 +6,10 @@ import psutil
 import shutil
 import datetime
 import uuid
+import subprocess
 
 # MQTT Configuration
-BROKER = '10.246.146.52'
+BROKER = '10.199.58.234'
 PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 TOPIC_ID = f"auth/user/{EDGE_ID}/"
@@ -18,7 +19,7 @@ DB_NAME = 'edge_cluster.db'
 JAR_PATH = "file.jar"  # chemin vers votre jar (ajustez si besoin)
 
 
-def run_jar(args: list, timeout: int = 10) -> Optional[str]:
+def run_jar(args: list, timeout: int = 10) -> None | str:
     """Run java -jar <JAR_PATH> <args...> and return stdout (str) or None on error."""
     cmd = ["java", "-jar", JAR_PATH] + args
     try:
@@ -598,7 +599,7 @@ def run():
     subscribe(client, "db/update")
     subscribe(client, f"video/liste/{EDGE_ID}")
     subscribe(client, f"video/watch/{EDGE_ID}")
-    
+    publish(client,f"user/abla", json.dumps({"yolo":"yoloswaaag"}))
     print(f"Edge Cluster ID: {EDGE_ID}")
 
 
