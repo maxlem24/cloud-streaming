@@ -16,7 +16,7 @@ TOPIC_ID = f"auth/user/{EDGE_ID}/"
 DB_NAME = 'edge_cluster.db'
 
 
-JAR_PATH = "file.jar"  # chemin vers votre jar (ajustez si besoin)
+JAR_PATH = "cloud_signature-1.0-SNAPSHOT-jar-with-dependencies.jar"  # chemin vers votre jar (ajustez si besoin)
 
 
 def run_jar(args: list, timeout: int = 10) -> None | str:
@@ -302,24 +302,11 @@ def db_export_videos():
 
     # Videos
     cursor.execute('SELECT id, title, description, category, live, edges, thumbnail, streamer_id, created_at FROM video')
-    videos = [
-        {
-            "id": row[0],
-            "title": row[1],
-            "description": row[2],
-            "category": row[3],
-            "live": row[4],
-            "edges": row[5],
-            "thumbnail": row[6],
-            "streamer_id": row[7],
-            "created_at": row[8]
-        }
-        for row in cursor.fetchall()
-    ]
+    videos = [{"id": row[0],"title": row[1],"description": row[2],"category": row[3],"live": row[4],"edges": row[5],"thumbnail": row[6],"streamer_id": row[7],"created_at": row[8]}for row in cursor.fetchall()]
 
     connection.close()
     
-    json_videos = json.dumps(videos, indent=4)
+    json_videos = json.dumps(videos)
     
     return json_videos
 
@@ -350,7 +337,7 @@ def db_export():
             "created_at": row[8]
         }
         for row in cursor.fetchall()
-    ]
+]
 
     # Chunks
     cursor.execute('SELECT id, video_id, part FROM chunk')
@@ -529,8 +516,8 @@ def subscribe(client: mqtt_client, topic: str):
             message_json=json.loads(msg.payload.decode())
             client_id=message_json["client_id"]
             videoslist=db_export_videos()
-            ### mettre en liste de listes ([video nom 1,id1, category, streamers, edges qui l'ont...]...)
-            publish(client,f"video/liste/{EDGE_ID}/{client_id}", json.dumps({"liste_videos":videoslist}))
+            print(f"videoslist: {videoslist}")
+            publish(client,f"video/liste/{EDGE_ID}/{client_id}", videoslist)
         if(msg.topic==f"video/watch/{EDGE_ID}"):
             #partie edge de watch_video()
             message_json=json.loads(msg.payload.decode())
@@ -604,10 +591,10 @@ def run():
     print(f"Edge Cluster ID: {EDGE_ID}")
 
 
+    #db_add_video("video2", "Video One", "Description of Video One", "Category1", True, "edge1,edge2", "thumbnail1.jpg", "streamer1")
     client.loop_forever()
 
     #db_add_streamer("streamer1", "Streamer One")
-    #db_add_video("video1", "Video One", "Description of Video One", "Category1", 1, "edge1,edge2", "thumbnail1.jpg", "streamer1")
 
 if __name__ == '__main__':
     run()
