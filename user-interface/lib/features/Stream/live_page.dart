@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../services/app_mqtt_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'package:twinsa/widgets/app_sidebar.dart';
 import 'widgets/video_card.dart';
@@ -51,10 +52,27 @@ class _LivePageState extends State<LivePage> {
       'views': 3700,
     },
   ];
+  final AppMqttService _mqtt = AppMqttService.instance;
+
+
+  @override
+  void initState() {
+    super.initState();
+    _initMqtt();
+  }
+
+  Future<void> _initMqtt() async {
+    if (!_mqtt.isConnected) {
+      await _mqtt.initAndConnect();
+    }
+    await _mqtt.refreshVideos();
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
+    final lives = _mqtt.liveVideos;
 
     var filtered = _selected == 'All'
         ? List<Map<String, dynamic>>.from(_lives)
@@ -328,38 +346,3 @@ class _ModernFilterState extends State<_ModernFilter> {
     overlay.insert(entry);
   }
 }
-
-// lib/features/Stream/live_page.dart
-
-// TODO(DATABASE): Créer le modèle LiveStream
-// class LiveStream {
-//   final String id;
-//   final String title;
-//   final String coverUrl;
-//   final String category;
-//   final String genre;
-//   final String streamerId;
-//   final String streamerName;
-//   final String streamerAvatar;
-//   final int viewerCount;
-//   final DateTime startedAt;
-//   final bool isLive;
-//   final String streamUrl;
-// }
-
-// TODO(API): Créer le service LiveService
-// class LiveService {
-//   Stream<List<LiveStream>> watchActiveLives() { }
-//   Future<List<LiveStream>> getLivesByCategory(String category) async { }
-//   Future<LiveStream> getLiveById(String id) async { }
-//   Future<void> startLive(LiveStream live) async { }
-//   Future<void> endLive(String liveId) async { }
-// }
-
-// TODO(REALTIME): Implémenter les mises à jour en temps réel
-// - Utiliser WebSocket ou Firebase Realtime Database
-// - Mettre à jour le nombre de viewers en temps réel
-// - Notifier quand un live démarre/termine
-
-// Note: Le reste du code de live_page.dart reste identique à video_page.dart
-// mais avec les données des lives actifs au lieu des vidéos enregistrées

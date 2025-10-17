@@ -2,6 +2,7 @@
 // lib/features/Stream/video_page.dart
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../services/app_mqtt_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'package:twinsa/widgets/app_sidebar.dart';
 import 'widgets/video_card.dart';
@@ -87,24 +88,29 @@ class _VideoPageState extends State<VideoPage> {
   late final List<String> _categories = ['All', ...{for (final v in _videos) v['category']! as String}];
   String _selectedCategory = 'All';
   String _sortBy = 'Most Recent';
+  final AppMqttService _mqtt = AppMqttService.instance;
 
-  // TODO(FETCH): Charger les vidéos au initState
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _loadVideos();
-  // }
-  //
-  // Future<void> _loadVideos() async {
-  //   final videos = await VideoService().getAllVideos();
-  //   setState(() => _videos = videos);
-  // }
+
+  @override
+  void initState() {
+    super.initState();
+    _initMqtt();
+  }
+
+  Future<void> _initMqtt() async {
+    if (!_mqtt.isConnected) {
+      await _mqtt.initAndConnect();
+    }
+    await _mqtt.refreshVideos();
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
-
+    final videos = _mqtt.nonLiveVideos;
     // TODO(DATABASE): Utiliser les vraies données
+    final lives = _mqtt.liveVideos;
     var filtered = _selectedCategory == 'All'
         ? List<Map<String, dynamic>>.from(_videos)
         : _videos.where((e) => e['category'] == _selectedCategory).toList();
@@ -120,15 +126,7 @@ class _VideoPageState extends State<VideoPage> {
       });
     }
 
-    // TODO(UI): Utiliser StreamBuilder pour les mises à jour en temps réel
-    // return StreamBuilder<List<Video>>(
-    //   stream: VideoService().watchVideos(),
-    //   builder: (context, snapshot) {
-    //     if (snapshot.hasError) return ErrorWidget();
-    //     if (!snapshot.hasData) return LoadingWidget();
-    //     return _buildVideoGrid(snapshot.data!);
-    //   },
-    // );
+
 
     return Scaffold(
       backgroundColor: theme.bgSoft,

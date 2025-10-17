@@ -1,19 +1,13 @@
 // lib/features/HomePage2/catalogue_page.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../services/app_mqtt_service.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'package:twinsa/widgets/ui_atoms.dart';
 import 'package:twinsa/widgets/app_sidebar.dart';
 
-// TODO(DATABASE): Créer les modèles de données
-// - LiveStream { id, title, thumbnailUrl, streamerName, viewerCount, isLive }
-// - Video { id, title, thumbnailUrl, duration, views, uploadDate }
-// - User { id, username, avatar }
 
-// TODO(API): Créer les services pour récupérer les données
-// - LiveService.getCurrentLives() -> List<LiveStream>
-// - VideoService.getTopVideos() -> List<Video>
-// - VideoService.getVideosByCategory(category) -> List<Video>
+
 
 class CataloguePage extends StatefulWidget {
   const CataloguePage({super.key});
@@ -31,24 +25,32 @@ class _CataloguePageState extends State<CataloguePage>
   late final AnimationController _c =
   AnimationController(vsync: this, duration: const Duration(seconds: 22))
     ..repeat(reverse: true);
+  final AppMqttService _mqtt = AppMqttService.instance;
 
-  // TODO(FETCH): Charger les données au initState
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _loadLiveStreams();
-  //   _loadTopVideos();
-  // }
 
   @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _initMqtt();
   }
+
+  Future<void> _initMqtt() async {
+    if (!_mqtt.isConnected) {
+      await _mqtt.initAndConnect();
+    }
+    await _mqtt.refreshVideos();
+    setState(() {});
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
+    final lives = _mqtt.liveVideos;
+    final videos = _mqtt.nonLiveVideos;
+
     return Scaffold(
       backgroundColor: theme.bgSoft,
       body: Stack(
