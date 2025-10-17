@@ -396,8 +396,6 @@ def subscribe(client: mqtt_client, topic: str):
         if (msg.topic==f"live/upload/{EDGE_ID}"):
             message_json=json.loads(msg.payload.decode())
             live_id=message_json["video_id"]
-            signature=message_json["signature"]
-            #faire des trucs avec la signature (voir avec Maxime)
             end = message_json["end"]
             try:
                 streamer_id=message_json["streamer_id"]
@@ -422,8 +420,11 @@ def subscribe(client: mqtt_client, topic: str):
                 try:
                     chunk=message_json["chunk"]
                     chunk_part=message_json["chunk_ID"]
-
-                    publish(client,f"live/watch/{EDGE_ID}/{live_id}", json.dumps({"chunk":chunk, "chunk_part":chunk_part}))
+                    verif=run_jar(["fog","verification",chunk])
+                    if (verif=="X"):
+                        print("chunk corrompu, on le rejette")
+                    else:
+                        publish(client,f"live/watch/{EDGE_ID}/{live_id}", json.dumps({"chunk":chunk, "chunk_part":chunk_part}))
                 except:
                     chunk=None
                     chunk_part=None
@@ -474,10 +475,10 @@ def subscribe(client: mqtt_client, topic: str):
                 if(end=="1"):
                     #pas besoin de vérif si on a tous les chunks (le streamer envoie le chunk d'apres que s'il a le ack d'avant)
    
-
-                    verif_chunk=db_add_chunk(video_id, f"{chunk_part}", chunk)
-                    if (not verif_chunk):
-                        print(f"erreur lors de l'ajout du chunk dans la bdd\n video_id={video_id}, chunk_part={chunk_part}")
+                    verif1=run_jar(["fog","verification",chunk])
+                    verif2=db_add_chunk(video_id, f"{chunk_part}", chunk)
+                    if (not verif2 or verif1=="X"):
+                        print(f"erreur lors de l'ajout du chunk dans la bdd\n video_id={video_id}, chunk_part={chunk_part}\n ou chunk corrompu (signature ayant raté la vérification)")
                     else: 
                         publish(client,f"db/update", json.dumps({"status":"ajout","live":False,"video_id":video_id,"EDGE_ID":EDGE_ID}))
 
@@ -591,10 +592,10 @@ def run():
     print(f"Edge Cluster ID: {EDGE_ID}")
 
 
-    #db_add_video("video2", "Video One", "Description of Video One", "Category1", True, "edge1,edge2", "thumbnail1.jpg", "streamer1")
     client.loop_forever()
 
     #db_add_streamer("streamer1", "Streamer One")
+    #db_add_video("video2", "Video One", "Description of Video One", "Category1", True, "edge1,edge2", "thumbnail1.jpg", "streamer1")
 
 if __name__ == '__main__':
     run()
