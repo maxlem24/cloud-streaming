@@ -19,18 +19,10 @@ DB_NAME = 'edge_cluster.db'
 JAR_PATH = "cloud_signature-1.0-SNAPSHOT-jar-with-dependencies.jar"  # chemin vers votre jar (ajustez si besoin)
 
 
-def run_jar(args: list, timeout: int = 10) -> None | str:
-    """Run java -jar <JAR_PATH> <args...> and return stdout (str) or None on error."""
+def run_jar(args: list, timeout: int = 10):
     cmd = ["java", "-jar", JAR_PATH] + args
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
-        if proc.returncode != 0:
-            print(f"jar error rc={proc.returncode} stderr={proc.stderr.strip()}")
-            return None
-        return proc.stdout.strip()
-    except Exception as e:
-        print(f"failed to run jar: {e}")
-        return None
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
+    return proc.stdout.strip()
 
 def db_setup(): 
     """Initialize SQLite database and create tables if they don't exist"""
@@ -517,7 +509,6 @@ def subscribe(client: mqtt_client, topic: str):
             message_json=json.loads(msg.payload.decode())
             client_id=message_json["client_id"]
             videoslist=db_export_videos()
-            print(f"videoslist: {videoslist}")
             publish(client,f"video/liste/{EDGE_ID}/{client_id}", videoslist)
         if(msg.topic==f"video/watch/{EDGE_ID}"):
             #partie edge de watch_video()
