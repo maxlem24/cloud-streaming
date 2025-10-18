@@ -283,6 +283,7 @@ class AppMqttService with ChangeNotifier {
 
     debugPrint('📊 Vidéos chargées: ${live.length} live, ${vod.length} VOD');
     notifyListeners();
+    _mqtt?.disconnect();
   }
 
 

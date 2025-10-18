@@ -1,4 +1,3 @@
-// lib/features/Settings/settings_page.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -9,8 +8,7 @@ import '/widgets/ui_atoms.dart';
 
 // TODO(DEVICES): Implémenter la détection des devices
 // - Utiliser camera package pour lister les caméras
-// - Utiliser flutter_sound ou record package pour les micros
-// - Sauvegarder les préférences dans SharedPreferences ou DB
+// - Sauvegarder les préférences dans SharedPreferences
 
 
 class SettingsPage extends StatefulWidget {
@@ -24,14 +22,6 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _loadAvailableDevices();
-  //   _loadUserSettings();
-  // }
-
-
   String _selectedCamera = 'HD Webcam (Built-in)';
   String _selectedAudioInput = 'Microphone (Default)';
   String _selectedAudioOutput = 'Speakers (Default)';
@@ -40,14 +30,14 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _enableNoiseSuppression = true;
   double _micVolume = 0.8;
 
-  // TODO(API): Remplacer par les devices réels
+  // TODO: Remplacer par les devices réels
   final List<String> _availableCameras = [
     'HD Webcam (Built-in)',
     'External USB Camera',
     'Virtual Camera',
   ];
 
-  // TODO(API): Remplacer par les devices audio réels
+  // TODO: Remplacer par les devices audio réels
   final List<String> _availableAudioInputs = [
     'Microphone (Default)',
     'External USB Mic',
@@ -135,16 +125,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                         },
                                         theme: theme,
                                       ),
-                                      const SizedBox(height: 16),
-                                      _TestButton(
-                                        label: 'Test Camera',
-                                        icon: Icons.play_circle_outline,
-                                        onPressed: () {
-                                          // TODO(CAMERA): Ouvrir preview caméra
-                                          _showCameraPreview();
-                                        },
-                                        theme: theme,
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -201,16 +181,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                         },
                                         theme: theme,
                                       ),
-                                      const SizedBox(height: 16),
-                                      _TestButton(
-                                        label: 'Test Microphone',
-                                        icon: Icons.graphic_eq_rounded,
-                                        onPressed: () {
-                                          // TODO(AUDIO): Ouvrir test micro avec visualisation
-                                          _showMicTest();
-                                        },
-                                        theme: theme,
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -234,16 +204,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                         onChanged: (val) {
                                           setState(() => _selectedAudioOutput = val!);
                                           // TODO(AUDIO): Appliquer le changement de sortie audio
-                                        },
-                                        theme: theme,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      _TestButton(
-                                        label: 'Test Speakers',
-                                        icon: Icons.surround_sound_rounded,
-                                        onPressed: () {
-                                          // TODO(AUDIO): Jouer un son de test
-                                          _playTestSound();
                                         },
                                         theme: theme,
                                       ),
@@ -294,47 +254,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ),
-    );
-  }
-
-  // TODO(CAMERA): Implémenter la preview caméra
-  void _showCameraPreview() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Camera Preview'),
-        content: const Text('TODO: Implement camera preview'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // TODO(AUDIO): Implémenter le test micro avec visualisation
-  void _showMicTest() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Microphone Test'),
-        content: const Text('TODO: Implement mic test with audio visualization'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // TODO(AUDIO): Implémenter le test son
-  void _playTestSound() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('TODO: Play test sound')),
     );
   }
 

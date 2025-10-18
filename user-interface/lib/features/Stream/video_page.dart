@@ -1,5 +1,3 @@
-
-// lib/features/Stream/video_page.dart
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../services/app_mqtt_service.dart';
@@ -7,32 +5,6 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import 'package:twinsa/widgets/app_sidebar.dart';
 import 'widgets/video_card.dart';
 import 'package:twinsa/widgets/ui_atoms.dart';
-
-// TODO(DATABASE): Créer le modèle Video
-// class Video {
-//   final String id;
-//   final String title;
-//   final String coverUrl;
-//   final String category;
-//   final String genre;
-//   final int year;
-//   final double rating;
-//   final String creatorId;
-//   final String creatorName;
-//   final String creatorAvatar;
-//   final int views;
-//   final DateTime uploadDate;
-//   final int duration; // en secondes
-// }
-
-// TODO(API): Créer le service VideoService
-// class VideoService {
-//   Future<List<Video>> getAllVideos() async { }
-//   Future<List<Video>> getVideosByCategory(String category) async { }
-//   Future<List<Video>> searchVideos(String query) async { }
-//   Future<Video> getVideoById(String id) async { }
-//   Stream<List<Video>> watchVideos() { }
-// }
 
 class VideoPage extends StatefulWidget {
   const VideoPage({super.key});
@@ -44,52 +16,10 @@ class VideoPage extends StatefulWidget {
 }
 
 class _VideoPageState extends State<VideoPage> {
-  // TODO(DATABASE): Remplacer par des données de la base de données
-  // Ces données devraient venir de :
-  // - Firestore collection "videos"
-  // - SQL table "videos"
-  // - API endpoint "/api/videos"
-  final List<Map<String, dynamic>> _videos = [
-    {
-      'title': 'Aquaman',
-      'year': '2018',
-      'genre': 'Fantasy / SF',
-      'category': 'Fantasy',
-      'cover': 'https://image.tmdb.org/t/p/w500/ydUpl3QkVUCHCq1VWvo2rW4Sf7y.jpg',
-      'rating': '7.7',
-      'creator': 'StreamerPro',
-      'avatar': 'https://i.pravatar.cc/150?img=12',
-      'views': 2400,
-    },
-    {
-      'title': 'The Dark Knight',
-      'year': '2008',
-      'genre': 'Drama / Thriller',
-      'category': 'Action',
-      'cover': 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg',
-      'rating': '9.0',
-      'creator': 'CinemaKing',
-      'avatar': 'https://i.pravatar.cc/150?img=8',
-      'views': 5100,
-    },
-    {
-      'title': 'Avatar',
-      'year': '2009',
-      'genre': 'Fantasy / SF',
-      'category': 'Science Fiction',
-      'cover': 'https://image.tmdb.org/t/p/w500/kyeqWdyUXW608qlYkRqosgbbJyK.jpg',
-      'rating': '7.8',
-      'creator': 'EpicGamer',
-      'avatar': 'https://i.pravatar.cc/150?img=15',
-      'views': 3200,
-    },
-  ];
-
-  late final List<String> _categories = ['All', ...{for (final v in _videos) v['category']! as String}];
   String _selectedCategory = 'All';
   String _sortBy = 'Most Recent';
   final AppMqttService _mqtt = AppMqttService.instance;
-
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -98,33 +28,78 @@ class _VideoPageState extends State<VideoPage> {
   }
 
   Future<void> _initMqtt() async {
-    if (!_mqtt.isConnected) {
-      await _mqtt.initAndConnect();
+    setState(() => _isLoading = true);
+    try {
+      if (!_mqtt.isConnected) {
+        await _mqtt.initAndConnect();
+      }
+      await _mqtt.refreshVideos();
+    } catch (e) {
+      debugPrint('Erreur init MQTT: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    await _mqtt.refreshVideos();
-    setState(() {});
+  }
+
+  List<String> _getCategories(List<VideoItem> videos) {
+    final cats = videos.map((v) => v.category).where((c) => c.isNotEmpty).toSet().toList();
+    cats.sort();
+    return ['All', ...cats];
+  }
+
+  List<VideoItem> _filterAndSort(List<VideoItem> videos) {
+    var filtered = _selectedCategory == 'All'
+        ? List<VideoItem>.from(videos)
+        : videos.where((v) => v.category == _selectedCategory).toList();
+
+    if (_sortBy == 'Most Recent') {
+      filtered.sort((a, b) {
+        if (a.createdAt != null && b.createdAt != null) {
+          return b.createdAt!.compareTo(a.createdAt!);
+        }
+        if (a.createdAt != null) return -1;
+        if (b.createdAt != null) return 1;
+        return 0;
+      });
+    } else if (_sortBy == 'Oldest') {
+      filtered.sort((a, b) {
+        if (a.createdAt != null && b.createdAt != null) {
+          return a.createdAt!.compareTo(b.createdAt!);
+        }
+        if (a.createdAt != null) return 1;
+        if (b.createdAt != null) return -1;
+        return 0;
+      });
+    } else if (_sortBy == 'A-Z') {
+      filtered.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    } else if (_sortBy == 'Z-A') {
+      filtered.sort((a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()));
+    }
+
+    return filtered;
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays > 365) return '${(diff.inDays / 365).floor()} year${diff.inDays >= 730 ? 's' : ''} ago';
+    if (diff.inDays > 30) return '${(diff.inDays / 30).floor()} month${diff.inDays >= 60 ? 's' : ''} ago';
+    if (diff.inDays > 0) return '${diff.inDays} day${diff.inDays > 1 ? 's' : ''} ago';
+    if (diff.inHours > 0) return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes} min ago';
+    return 'Just now';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
     final videos = _mqtt.nonLiveVideos;
-    // TODO(DATABASE): Utiliser les vraies données
-    final lives = _mqtt.liveVideos;
-    var filtered = _selectedCategory == 'All'
-        ? List<Map<String, dynamic>>.from(_videos)
-        : _videos.where((e) => e['category'] == _selectedCategory).toList();
 
-    // Tri
-    if (_sortBy == 'Most Popular') {
-      filtered.sort((a, b) => (b['views'] as int).compareTo(a['views'] as int));
-    } else if (_sortBy == 'Top Rated') {
-      filtered.sort((a, b) {
-        final ratingA = double.tryParse(a['rating'] as String? ?? '0') ?? 0;
-        final ratingB = double.tryParse(b['rating'] as String? ?? '0') ?? 0;
-        return ratingB.compareTo(ratingA);
-      });
-    }
+
+    final categories = _getCategories(videos);
+    final filtered = _filterAndSort(videos);
 
 
 
@@ -139,64 +114,171 @@ class _VideoPageState extends State<VideoPage> {
               const AppSidebar(currentKey: 'videos'),
               Expanded(
                 child: SafeArea(
-                  child: LayoutBuilder(
+                  child: _isLoading
+                      ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(color: theme.primary),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Loading videos...',
+                          style: TextStyle(
+                            color: theme.white.withOpacity(.7),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                      : LayoutBuilder(
                     builder: (context, c) {
                       final width = c.maxWidth;
-                      const tileMin = 200.0, gutter = 14.0;
+                      const tileMin = 220.0, gutter = 16.0;
                       final cols = math.max(2, (width / (tileMin + gutter)).floor());
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Header
                             Row(
                               children: [
-                                const Spacer(),
-                                LabeledDropdown<String>(
-                                  label: 'Filter by',
-                                  value: _selectedCategory,
-                                  items: _categories
-                                      .map((c) => DropdownMenuItem<String>(value: c, child: Text(c)))
-                                      .toList(),
-                                  onChanged: (val) => setState(() => _selectedCategory = val ?? _selectedCategory),
-                                  width: 180,
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: theme.primary.withOpacity(.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    Icons.video_library,
+                                    color: theme.primary,
+                                    size: 28,
+                                  ),
                                 ),
+                                const SizedBox(width: 16),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Video Library',
+                                      style: TextStyle(
+                                        color: theme.white,
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${filtered.length} ${filtered.length == 1 ? 'video' : 'videos'} available',
+                                      style: TextStyle(
+                                        color: theme.white.withOpacity(.65),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Spacer(),
+                                // Filters
+                                if (categories.length > 1)
+                                  LabeledDropdown<String>(
+                                    label: 'Category',
+                                    value: _selectedCategory,
+                                    items: categories
+                                        .map((c) => DropdownMenuItem<String>(value: c, child: Text(c)))
+                                        .toList(),
+                                    onChanged: (val) => setState(() => _selectedCategory = val ?? _selectedCategory),
+                                    width: 180,
+                                  ),
                                 const SizedBox(width: 12),
                                 LabeledDropdown<String>(
-                                  label: 'Order by',
+                                  label: 'Sort by',
                                   value: _sortBy,
-                                  items: const ['Most Recent', 'Most Popular', 'Top Rated']
+                                  items: const ['Most Recent', 'Oldest', 'A-Z', 'Z-A']
                                       .map((s) => DropdownMenuItem<String>(value: s, child: Text(s)))
                                       .toList(),
                                   onChanged: (val) => setState(() => _sortBy = val ?? _sortBy),
                                   width: 180,
                                 ),
+                                const SizedBox(width: 12),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: theme.primary.withOpacity(.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: theme.primary.withOpacity(.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: IconButton(
+                                    icon: Icon(Icons.refresh_rounded, color: theme.primary),
+                                    onPressed: _initMqtt,
+                                    tooltip: 'Refresh',
+                                  ),
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 28),
+                            // Content
                             Expanded(
-                              child: GridView.builder(
+                              child: filtered.isEmpty
+                                  ? Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(24),
+                                      decoration: BoxDecoration(
+                                        color: theme.surface.withOpacity(.5),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.video_library_outlined,
+                                        size: 64,
+                                        color: theme.white.withOpacity(.3),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    Text(
+                                      'No videos available',
+                                      style: TextStyle(
+                                        color: theme.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Videos will appear here once uploaded',
+                                      style: TextStyle(
+                                        color: theme.white.withOpacity(.5),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                                  : GridView.builder(
                                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: cols,
                                   crossAxisSpacing: gutter,
                                   mainAxisSpacing: gutter,
-                                  childAspectRatio: .7,
+                                  childAspectRatio: .72,
                                 ),
                                 itemCount: filtered.length,
                                 itemBuilder: (_, i) {
                                   final v = filtered[i];
                                   return VideoCard(
-                                    title: v['title']! as String,
-                                    subtitle: '${v['year']} • ${v['genre']}',
-                                    coverUrl: v['cover']! as String,
-                                    rating: v['rating'] as String?,
-                                    creatorName: v['creator'] as String?,
-                                    creatorAvatar: v['avatar'] as String?,
-                                    viewCount: '${_formatViews(v['views'] as int)}',
+                                    title: v.title,
+                                    subtitle: v.category.isNotEmpty ? v.category : 'Video',
                                     isLive: false,
-                                    // TODO(NAVIGATION): Implémenter la navigation vers le player vidéo
+                                    creatorName: v.streamerId.isNotEmpty ? v.streamerId : null,
+                                    uploadDate: _formatDate(v.createdAt),
                                     onTap: () {
-                                      // Navigator.pushNamed(context, '/video/${v['id']}');
+                                      debugPrint('Play video: ${v.id} (edges: ${v.edges})');
+                                      // TODO: Navigation vers le player avec v.edges et faut split avant le edges avec ,
                                     },
                                   );
                                 },
@@ -214,12 +296,5 @@ class _VideoPageState extends State<VideoPage> {
         ],
       ),
     );
-  }
-
-  String _formatViews(int views) {
-    if (views >= 1000) {
-      return '${(views / 1000).toStringAsFixed(1)}K';
-    }
-    return views.toString();
   }
 }

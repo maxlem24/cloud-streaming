@@ -50,13 +50,13 @@ class AppSidebar extends StatelessWidget {
   final double maxWidth;
 
   static const _top = <_NavItem>[
-    _NavItem('home', Icons.home_rounded, 'Accueil'),
-    _NavItem('videos', Icons.video_library_rounded, 'Vidéos'),
+    _NavItem('home', Icons.home_rounded, 'Home'),
+    _NavItem('videos', Icons.video_library_rounded, 'Videos'),
     _NavItem('live', Icons.live_tv_rounded, 'Live'),
     _NavItem('go_live', Icons.podcasts_rounded, 'Go Live'),
   ];
   static const _bottom = <_NavItem>[
-    _NavItem('settings', Icons.settings_rounded, 'Paramètres'),
+    _NavItem('settings', Icons.settings_rounded, 'Settings'),
     _NavItem('profile', Icons.person_rounded, 'Profile'),
   ];
 
@@ -73,10 +73,10 @@ class AppSidebar extends StatelessWidget {
         route = '/lives';
         break;
       case 'go_live':
-        route = '/go-live'; // TODO
+        route = '/go-live';
         break;
       case 'settings':
-        route = '/settings'; // TODO
+        route = '/settings';
         break;
       case 'profile':
         route = '/profile';
@@ -85,7 +85,6 @@ class AppSidebar extends StatelessWidget {
     final current = ModalRoute.of(context)?.settings.name;
     if (route != null && current != route) {
       if (route == '/catalogue') {
-        // Catalogue = racine, on vide la pile
         Navigator.of(context).pushNamedAndRemoveUntil(route, (r) => false);
       } else {
         Navigator.of(context).pushNamed(route);
@@ -159,7 +158,7 @@ class AppSidebar extends StatelessWidget {
                         child: _Header(
                           expanded: isExpanded,
                           titleStyle: theme.headlineMedium.copyWith(
-                            color: Colors.white,
+                            color: theme.white,
                             fontWeight: FontWeight.w700,
                             letterSpacing: .2,
                           ),
@@ -175,7 +174,7 @@ class AppSidebar extends StatelessWidget {
                           ),
                           children: [
                             if (isExpanded)
-                              const _SectionLabel(text: 'Parcourir'),
+                              const _SectionLabel(text: 'Browse'),
                             for (final it in _top)
                               _SidebarItem(
                                 item: it,
@@ -204,7 +203,7 @@ class AppSidebar extends StatelessWidget {
                         child: Column(
                           children: [
                             if (isExpanded)
-                              const _SectionLabel(text: 'Compte'),
+                              const _SectionLabel(text: 'Account'),
                             for (final it in _bottom)
                               _SidebarItem(
                                 item: it,
