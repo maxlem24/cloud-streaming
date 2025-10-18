@@ -15,6 +15,7 @@ import os
 sys.stdout.reconfigure(line_buffering=True)
 
 # MQTT Configuration
+
 BROKER = os.getenv("MQTT_BROKER", "localhost")
 PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
@@ -219,9 +220,13 @@ def db_import(body) :
     for s in body["streamers"]:
         print(s)
         db_add_streamer(s["id"], s["name"])
+        print("Streamer ajouté : \n")
+        print(db_get_streamer_by_id(s["id"]))
+
     for v in body["videos"] :
-        db_add_video(v["id"], v["title"], v["description"], v["category"], v["edges"], v["thumbnail"], s["id"])
-        
+        db_add_video(v["id"], v["title"], v["description"], v["category"],v["live"], v["edges"], v["thumbnail"], s["id"])
+        print("Video ajouté : \n")
+        print(db_get_video_by_id(v["id"]))
 def db_get_video_by_id(video_id):
     """Retrieve a video by its ID"""
     connection = sqlite3.connect(DB_NAME)
@@ -408,7 +413,7 @@ def subscribe(client: mqtt_client, topic: str):
                 live_nom=message_json["video_nom"]
                 if(db_get_streamer_by_id(streamer_id)==None):
                     db_add_streamer(streamer_id, streamer_nom)
-                publish(client,f"db/update", json.dumps({"status":"ajout","live":True,"video_id":live_id, "EDGE_ID":EDGE_ID, "streamer_id":streamer_id, "streamer_nom":streamer_nom, "category":category, "description":description, "thumbnail":thumbnail}))
+                publish(client,f"db/update", json.dumps({"status":"ajout","video_nom":live_nom,"live":True,"video_id":live_id, "EDGE_ID":EDGE_ID, "streamer_id":streamer_id, "streamer_nom":streamer_nom, "category":category, "description":description, "thumbnail":thumbnail}))
                 db_add_video(live_id, live_nom, description, category, True, EDGE_ID, thumbnail, streamer_id)
             else:
                 "partie 2"
@@ -461,11 +466,19 @@ def subscribe(client: mqtt_client, topic: str):
                 streamer_exist=True if db_get_streamer_by_id(streamer_id) else False
                 if(not streamer_exist):
                     db_add_streamer(streamer_id, streamer_nom)
-
-                db_add_video(video_id, video_nom, description, category, False, EDGE_ID, thumbnail, streamer_id)
+                video_exist=True if db_get_video_by_id(video_id) else False
+                if(not video_exist):
+                    print(f"erreur, vidéo non trouvée dans bdd : nom={video_nom}, ID={video_id}")
+                    db_add_video(video_id, video_nom, description, category, False, EDGE_ID, thumbnail, streamer_id)
+                else:
+                    db_add_video_edges(video_id,EDGE_ID)
+                    print(db_get_video_by_id(video_id))
+                print(db_get_video_by_id(video_id))
                 publish(client,f"video/upload/{EDGE_ID}/{streamer_id}", json.dumps({"video_id":video_id,"EDGE_ID":EDGE_ID}))
+                publish(client,"db/update",json.dumps({"status":"ajout","video_nom":video_nom,"live":True,"video_id":video_id, "EDGE_ID":EDGE_ID, "streamer_id":streamer_id, "streamer_nom":streamer_nom, "category":category, "description":description, "thumbnail":thumbnail}))
             else:
                 "partie 2"
+                print("GDIEGIFUY")
                 #vérif video existe dans bdd
                 chunk=message_json["chunk"]
                 chunk_part=message_json["chunk_part"] #combien t ieme chunk
@@ -474,13 +487,13 @@ def subscribe(client: mqtt_client, topic: str):
                     print(f"erreur, vidéo non trouvée dans bdd : nom={video_nom}, ID={video_id}")
                 if(end=="1"):
                     #pas besoin de vérif si on a tous les chunks (le streamer envoie le chunk d'apres que s'il a le ack d'avant)
-   
                     verif1=run_jar(["fog","verification",chunk])
                     verif2=db_add_chunk(video_id, f"{chunk_part}", chunk)
                     if (not verif2 or verif1=="X"):
                         print(f"erreur lors de l'ajout du chunk dans la bdd\n video_id={video_id}, chunk_part={chunk_part}\n ou chunk corrompu (signature ayant raté la vérification)")
                     else: 
-                        publish(client,f"db/update", json.dumps({"status":"ajout","live":False,"video_id":video_id,"EDGE_ID":EDGE_ID}))
+                        publish(client,f"db/update", json.dumps({"status":"ajout","live":False,"video_id":video_id,"EDGE_ID":EDGE_ID,"video_nom":video_nom,"category":category,"streamer_id":streamer_id,"streamer_nom":streamer_nom,"description":description,"thumbnail":thumbnail}))
+
                 else:
                     verif_chunk=db_add_chunk(video_id, f"{chunk_part}", chunk)
                     if (not verif_chunk):
@@ -492,24 +505,29 @@ def subscribe(client: mqtt_client, topic: str):
             status=message_json["status"]
             video_id=message_json["video_id"]
             if(status=="ajout"):
-                video_nom=message_json["video_nom"]
-                category=message_json["category"]
-                EDGE2_ID=message_json["EDGE_ID"]
-                streamer_id=message_json["streamer_id"]
-                streamer_nom=message_json["streamer_nom"]
-                live=message_json["live"]
-                description=message_json["description"]
-                thumbnail=message_json["thumbnail"]
-                if(db_get_streamer_by_id(streamer_id)==None):
-                    db_add_streamer(streamer_id, streamer_nom)
-                if(db_get_video_by_id(video_id)==None):
-                    db_add_video(video_id, video_nom, description, category, live, EDGE2_ID, thumbnail, streamer_id)
-                else:
-                    db_add_video_edges(video_id, EDGE2_ID)
+                video_exist = True if db_get_video_by_id(video_id) else False
+                if(video_exist):
+                    db_add_video_edges(video_id,EDGE_ID)
+                else:  
+                    video_nom=message_json["video_nom"]
+                    category=message_json["category"]
+                    EDGE2_ID=message_json["EDGE_ID"]
+                    streamer_id=message_json["streamer_id"]
+                    streamer_nom=message_json["streamer_nom"]
+                    live=message_json["live"]
+                    description=message_json["description"]
+                    thumbnail=message_json["thumbnail"]
+                    if(db_get_streamer_by_id(streamer_id)==None):
+                        db_add_streamer(streamer_id, streamer_nom)
+                    if(db_get_video_by_id(video_id)==None):
+                        db_add_video(video_id, video_nom, description, category, live, EDGE2_ID, thumbnail, streamer_id)
+                    else:
+                        db_add_video_edges(video_id, EDGE2_ID)
             else:
                 if(db_get_video_by_id(video_id)!=None):
                     db_remove_video(video_id)
-
+            print(db_get_video_by_id(video_id))
+            
         if(msg.topic==f"video/liste/{EDGE_ID}"):
             #partie edge de get_videos
             message_json=json.loads(msg.payload.decode())
@@ -534,7 +552,7 @@ def subscribe(client: mqtt_client, topic: str):
                 publish(client,f"video/watch/{EDGE_ID}/{client_id}", json.dumps({"video_nom":video_nom,"video_id":video_id,"chunk_part":chunk_part,"chunk":chunk,"end":"0"}))
 
 
-        if (msg.topic=="db/"):
+        if (msg.topic=="db"):
             db_content = db_export()
             db_json = json.dumps(db_content)
             message_json=json.loads(msg.payload.decode())
@@ -544,12 +562,13 @@ def subscribe(client: mqtt_client, topic: str):
             if db_content["streamers"]:
                 # send db 
                 print("Envoie de la DB faite")
-                publish(client,f"db/{EDGE2_ID}/",db_json)
+                publish(client,f"db/{EDGE2_ID}",db_json)
             else:
                 print("On a pas de DB donc ff on envoie que c'est empty")
                 payload = json.dumps({'streamers' : "Empty"})
-                publish(client,f"db/{EDGE2_ID}/",payload)
-        if (msg.topic == f"db/{EDGE_ID}/"):
+                publish(client,f"db/{EDGE2_ID}",payload)
+        if (msg.topic == f"db/{EDGE_ID}"):
+
             message_json=json.loads(msg.payload.decode())
             if message_json['streamers'] == "Empty":
                 print("On ne fait rien, car on a reçu une BDD vide")
@@ -565,8 +584,8 @@ def premiere_connexion(client):
         'ID' : EDGE_ID,
     }
     payload_ID = json.dumps(payload)
-    publish(client,"auth/zone/",payload_ID)
-    publish(client,"db/",payload_ID)
+    publish(client,"auth/zone",payload_ID)
+    publish(client,"db",payload_ID)
 
 
 def run():
@@ -588,14 +607,11 @@ def run():
     subscribe(client, f"video/watch/{EDGE_ID}")
     print(f"Edge Cluster ID: {EDGE_ID}")
 
-    publish(client, "video/request/ping", json.dumps({"client_id": EDGE_ID}))
-
     client.loop_forever()
-
-    
 
     #db_add_streamer("streamer1", "Streamer One")
     #db_add_video("video2", "Video One", "Description of Video One", "Category1", True, "edge1,edge2", "thumbnail1.jpg", "streamer1")
+
 
 if __name__ == '__main__':
     run()
