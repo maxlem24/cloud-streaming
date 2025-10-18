@@ -1,0 +1,18 @@
+services: 
+
+  broker:
+    image: eclipse-mosquitto:latest
+    container_name: mqtt_broker
+    network_mode: host
+    volumes:
+      - ./edge-cluster/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    
+
+  edge:
+    build: ./edge-cluster
+    container_name: edge_cluster
+    network_mode: "host"
+    depends_on:
+      - broker
+    environment:
+      - MQTT_BROKER=localhost
