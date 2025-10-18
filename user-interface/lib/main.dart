@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:twinsa/services/app_mqtt_service.dart';
 import 'package:twinsa/widgets/splash_screen.dart';
+import 'features/live/streamer_page3.dart';
 import 'flutter_flow/flutter_flow_theme.dart';
 
 // Pages
@@ -21,6 +23,7 @@ import 'package:path_provider/path_provider.dart';
 //BD
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:media_kit/media_kit.dart';
 
 
 
@@ -59,6 +62,8 @@ class TwInsaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     FlutterFlowTheme.of(context);
+    VideoItem v = VideoItem(id: '0', title: 'title', description: 'description', category: 'category', live: true, edges: 'edges', thumbnail: 'thumbnail', streamerId: 'streamerId', createdAt: null);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: "TW'INSA",
@@ -82,6 +87,7 @@ class TwInsaApp extends StatelessWidget {
         '/lives': (_) => const LivePage(),
         '/profile': (_) => const ProfilePage(),
         '/settings': (_) => const SettingsPage(),
+        '/go_live': (_) =>  GoLive(broker: '172.20.10.4', port: 1883, topic: '..', video: v)
       },
     );
   }

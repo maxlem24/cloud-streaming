@@ -1,10 +1,13 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:twinsa/features/Stream/widgets/video_card.dart';
+
+import '../../flutter_flow/flutter_flow_theme.dart';
 import '../../services/app_mqtt_service.dart';
-import '/flutter_flow/flutter_flow_theme.dart';
-import 'package:twinsa/widgets/app_sidebar.dart';
-import 'widgets/video_card.dart';
-import 'package:twinsa/widgets/ui_atoms.dart';
+import '../../widgets/app_sidebar.dart';
+import '../../widgets/ui_atoms.dart';
+import '../live/viewer_page3.dart';
+
 
 class VideoPage extends StatefulWidget {
   const VideoPage({super.key});
@@ -90,6 +93,26 @@ class _VideoPageState extends State<VideoPage> {
     if (diff.inHours > 0) return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
     if (diff.inMinutes > 0) return '${diff.inMinutes} min ago';
     return 'Just now';
+  }
+
+  Map<String, dynamic> buildLiveJsonMessage({
+    required VideoItem video,
+    required String streamerName, // streamer_nom
+    required dynamic end,         // peut être bool, String, DateTime
+  }) {
+    // Normalise "end" si c’est un DateTime
+    final normalizedEnd = (end is DateTime) ? end.toIso8601String() : end;
+
+    return {
+      "live_id":      video.id,            // message_json["video_id"]
+      "end":          normalizedEnd,       // message_json["end"]
+      "streamer_nom": streamerName,        // message_json["streamer_nom"]
+      "category":     video.category,      // message_json["category"]
+      "description":  video.description,   // message_json["description"]
+      "thumbnail":    video.thumbnail,     // message_json["thumbnail"]
+      "live_nom":     video.title,         // message_json["video_nom"]
+      "streamer_id":  video.streamerId,    // message_json["streamer_id"]
+    };
   }
 
   @override
@@ -277,8 +300,48 @@ class _VideoPageState extends State<VideoPage> {
                                     creatorName: v.streamerId.isNotEmpty ? v.streamerId : null,
                                     uploadDate: _formatDate(v.createdAt),
                                     onTap: () {
-                                      debugPrint('Play video: ${v.id} (edges: ${v.edges})');
-                                      // TODO: Navigation vers le player avec v.edges et faut split avant le edges avec ,
+                                      if (v.edges.isEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: const Text('No stream information available'),
+                                            backgroundColor: theme.red,
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      try {
+
+                                        final parts = v.edges.split(',');
+                                        print(parts);
+                                        final brokerParts = parts[0];
+                                        print(brokerParts);
+                                        final broker = '172.20.10.4';
+                                        final port = 1883;
+                                        final topic_main = "live/watch/${brokerParts}/";
+                                        final topic = topic_main+v.id;
+
+                                        print(topic_main);
+                                        print(topic);
+
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ViewerPage(
+                                              broker: broker,
+                                              port: port,
+                                              topic: topic,
+                                            ),
+                                          ),
+                                        );
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Mauvaise information de stream: $e'),
+                                            backgroundColor: theme.red,
+                                          ),
+                                        );
+                                      }
                                     },
                                   );
                                 },

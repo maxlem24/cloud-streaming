@@ -73,7 +73,7 @@ class AppSidebar extends StatelessWidget {
         route = '/lives';
         break;
       case 'go_live':
-        route = '/go-live';
+        route = '/go_live';
         break;
       case 'settings':
         route = '/settings';
