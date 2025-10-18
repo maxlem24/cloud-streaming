@@ -7,9 +7,14 @@ import shutil
 import datetime
 import uuid
 import subprocess
+import time
+import sys
+import platform
+
+sys.stdout.reconfigure(line_buffering=True)
 
 # MQTT Configuration
-BROKER = '172.20.10.4'
+BROKER = '10.213.250.234'
 PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 TOPIC_ID = f"auth/user/{EDGE_ID}/"
@@ -153,7 +158,8 @@ def get_system_status():
         }
         
         # Disk usage
-        disk_usage = shutil.disk_usage("C:\\")  # Windows C: drive
+        mount = "C:\\" if platform.system() == "Windows" else "/"
+        disk_usage = shutil.disk_usage(mount)
         disk_info = {
             "total": disk_usage.total,
             "used": disk_usage.used,
@@ -574,8 +580,8 @@ def premiere_connexion(client):
 
 def run():
     """Main function to run MQTT client"""
-
     client = connect_mqtt()
+    
     db_setup()  
     premiere_connexion(client)
     subscribe(client, "db")
@@ -590,7 +596,6 @@ def run():
     subscribe(client, f"video/liste/{EDGE_ID}")
     subscribe(client, f"video/watch/{EDGE_ID}")
     print(f"Edge Cluster ID: {EDGE_ID}")
-
 
     client.loop_forever()
 
