@@ -432,7 +432,6 @@ def subscribe(client: mqtt_client, topic: str):
             # partie edge de send_video et video_received
             message_json=json.loads(msg.payload.decode())
             video_id=message_json["video_id"]
-            video_nom=message_json["video_nom"]
             end=message_json["end"]
             try:
                 category=message_json["category"]
@@ -440,12 +439,15 @@ def subscribe(client: mqtt_client, topic: str):
                 streamer_id=message_json["streamer_id"]
                 streamer_nom=message_json["streamer_nom"]
                 description=message_json["description"]
+                
+                video_nom=message_json["video_nom"]
             except:
                 streamer_id=None
                 streamer_nom=None
                 category=None
                 thumbnail=None
                 description=None
+                video_nom=None
 
             if (streamer_id and description and streamer_nom and category and thumbnail):
                 "partie 1"
@@ -473,8 +475,6 @@ def subscribe(client: mqtt_client, topic: str):
                         print(f"erreur lors de l'ajout du chunk dans la bdd\n video_id={video_id}, chunk_part={chunk_part}\n ou chunk corrompu (signature ayant raté la vérification)")
                     else: 
                         publish(client,f"db/update", json.dumps({"status":"ajout","live":False,"video_id":video_id,"EDGE_ID":EDGE_ID}))
-
-
                 else:
                     verif_chunk=db_add_chunk(video_id, f"{chunk_part}", chunk)
                     if (not verif_chunk):
