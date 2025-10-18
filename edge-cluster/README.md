@@ -3,6 +3,6 @@
 
 # Comment récupérer le docker mosquitto : 
 ```bash
-docker run -it -p 1883:1883 -v "${PWD}/mosquitto/config:/mosquitto/config" eclipse-mosquitto
+docker run -it -p 1883:1883 -v ./mosquitto/config:/mosquitto/config eclipse-mosquitto
 ```
 Le fichier mosquitto.conf est dans le dossier (faut regarder au dessus)
