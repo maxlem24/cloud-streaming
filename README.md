@@ -31,3 +31,11 @@ Client :
 7. Le client s'abonne au topic du edge le plus adéquat
 9. Le edge renvoie en boucle la vidéo par morceau au client
 
+
+Signature : 
+
+
+Authentification : 
+
+
+
