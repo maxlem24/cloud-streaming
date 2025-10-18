@@ -1,33 +1,15 @@
-# FROM eclipse-temurin:21
-# RUN mkdir /opt/app
-# COPY ./cloud_signature-1.0-SNAPSHOT-jar-with-dependencies.jar /opt/app
-# Install the application dependencies
-# COPY requirements.txt ./
-# RUN pip install --no-cache-dir -r requirements.txt
-# Copy in the source code
-# COPY src ./src
-# EXPOSE 8080
+FROM python:3.13.9-alpine3.22
 
-# CMD ["java", "-jar", "/opt/app/cloud_signature-1.0-SNAPSHOT-jar-with-dependencies.jar"]
-
-# Utiliser une image de base Python officielle
-FROM python:3.13.9-alpine
-
-# Mettre à jour et installer Java (OpenJDK 21 ici, tu peux adapter la version)
 RUN apk add --no-cache openjdk21
 RUN apk add gcc python3-dev musl-dev linux-headers
 
-# Définir les variables d'environnement Java
 ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
-# Créer un répertoire pour ton application
-WORKDIR /app
+WORKDIR /app/cloud
 
-# Copier les fichiers de ton projet dans l'image
-COPY . /app
+COPY . /app/cloud
 
-# Installer les dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Commande par défaut
