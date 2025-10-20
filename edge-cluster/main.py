@@ -386,15 +386,16 @@ def subscribe(client: mqtt_client, topic: str):
             publish_status(client, status_data,CLIENT_ID)
             
         if (msg.topic==f"live/upload/{EDGE_ID}"):
+            print("paquet reçuuuuuuuuuuuuuuuuuuuuuuuuu")
             message_json=json.loads(msg.payload.decode())
             live_id=message_json["video_id"]
             end = message_json["end"]
             try:
                 streamer_id=message_json["streamer_id"]
-            except:
+            except Exception as e:
                 streamer_id=None
             if(streamer_id):
-                "partie 1"
+                print("partie 1")
                 streamer_nom=message_json["streamer_nom"]
                 category=message_json["category"]
                 description=message_json["description"]
@@ -402,22 +403,23 @@ def subscribe(client: mqtt_client, topic: str):
                 live_nom=message_json["video_nom"]
                 if(db_get_streamer_by_id(streamer_id)==None):
                     db_add_streamer(streamer_id, streamer_nom)
-                publish(client,f"db/update", json.dumps({"status":"ajout","live":True,"video_id":live_id, "EDGE_ID":EDGE_ID, "streamer_id":streamer_id, "streamer_nom":streamer_nom, "category":category, "description":description, "thumbnail":thumbnail}))
+                    publish(client,f"db/update", json.dumps({"status":"ajout","live":True,"video_id":live_id,"video_nom":live_nom,"category":category,"streamer_id":streamer_id,"streamer_nom":streamer_nom,"description":description,"thumbnail":thumbnail,"EDGE_ID":EDGE_ID}))
                 db_add_video(live_id, live_nom, description, category, True, EDGE_ID, thumbnail, streamer_id)
             else:
-                "partie 2"
-                if(end == 1):
+                print("partie 2")
+                if(end == 1 or end=="1"):
                     publish(client,f"db/update", json.dumps({"status":"suppression","video_id":live_id, "EDGE_ID":EDGE_ID}))
                     db_remove_video(live_id)
                 try:
                     chunk=message_json["chunk"]
-                    chunk_part=message_json["chunk_ID"]
+                    chunk_part=message_json["chunk_part"]
                     verif=run_jar(["fog","verification",chunk])
+                    print(f"verif chunk live: a{verif}a")
                     if (verif=="X"):
                         print("chunk corrompu, on le rejette")
                     else:
                         publish(client,f"live/watch/{EDGE_ID}/{live_id}", json.dumps({"chunk":chunk, "chunk_part":chunk_part}))
-                except:
+                except Exception as e:
                     chunk=None
                     chunk_part=None
                     #problemes, les chunk ont pas été recu
@@ -439,9 +441,8 @@ def subscribe(client: mqtt_client, topic: str):
                 streamer_id=message_json["streamer_id"]
                 streamer_nom=message_json["streamer_nom"]
                 description=message_json["description"]
-                
                 video_nom=message_json["video_nom"]
-            except:
+            except Exception as e:
                 streamer_id=None
                 streamer_nom=None
                 category=None
@@ -474,7 +475,7 @@ def subscribe(client: mqtt_client, topic: str):
                     if (not verif2 or verif1=="X"):
                         print(f"erreur lors de l'ajout du chunk dans la bdd\n video_id={video_id}, chunk_part={chunk_part}\n ou chunk corrompu (signature ayant raté la vérification)")
                     else: 
-                        publish(client,f"db/update", json.dumps({"status":"ajout","live":False,"video_id":video_id,"EDGE_ID":EDGE_ID}))
+                        publish(client,f"db/update", json.dumps({"status":"ajout","live":False,"video_id":video_id,"video_nom":video_nom,"category":category,"streamer_id":streamer_id,"streamer_nom":streamer_nom,"description":description,"thumbnail":thumbnail,"EDGE_ID":EDGE_ID}))
                 else:
                     verif_chunk=db_add_chunk(video_id, f"{chunk_part}", chunk)
                     if (not verif_chunk):
