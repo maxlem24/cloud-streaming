@@ -13,13 +13,13 @@ key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 supabase: Client = create_client(url, key)
 
 # MQTT Configuration
-BROKER = '10.246.146.52'
+BROKER = '172.20.10.4'
 PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 TOPIC_ID = f"auth/user/{EDGE_ID}/"
 DB_NAME = 'edge_cluster.db'
 
-JAR_PATH = "file.jar"  # chemin vers votre jar (ajustez si besoin)
+JAR_PATH = "cloud_signature-1.0-SNAPSHOT-jar-with-dependencies.jar"  # chemin vers votre jar (ajustez si besoin)
 
 
 def run_jar(args: list, timeout: int = 10) -> str | None:
@@ -64,24 +64,24 @@ def subscribe(client: mqtt_client, topic: str):
         if (msg.topic=="auth/zone"):
             # on reçoi : ID
             message_json=json.loads(msg.payload.decode())
-            ID=message_json["ID"]
+            client_id=message_json["ID"]
             #récupérer les paramètres de la zone
-            code=run_jar(["identification",client_id])
+            code=run_jar(["id",client_id])
             msg_a_envoyer={"parametre":code,"status":"ok"}
             message_json=json.dumps(msg_a_envoyer)
-            publish(client,f"auth/zone/{ID}", message_json)
+            publish(client,f"auth/zone/{client_id}", message_json)
         if (msg.topic=="auth/user"):
             message_json=json.loads(msg.payload.decode())
-            jwt=message_json["jwt"]
+            jwt=message_json["ownerId"]
             try:    
                 response = supabase.auth.get_claims(jwt)
                 client_id=response["claims"]["sub"]
                 code=run_jar(["identification",client_id])
-                msg_a_envoyer={"status":"ok","code":code}
+                msg_a_envoyer={"status":"ok","ownerbase64":code}
+                publish(client,f"auth/user/{client_id}", json.dumps(msg_a_envoyer))
             except Exception as e:
-                msg_a_envoyer={"status":"jwterror","code":""}
-
-            publish(client,f"auth/user/{client_id}", json.dumps(msg_a_envoyer))
+                print(e)
+    
     client.subscribe(topic)
     print(f"On est souscrit au topic {topic}")
     client.on_message = on_message
@@ -96,7 +96,6 @@ def run():
     """Main function to run MQTT client"""
 
     client = connect_mqtt()
-    
     subscribe(client, "auth/zone")  
     subscribe(client, "auth/user")  
     
