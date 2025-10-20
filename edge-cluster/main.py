@@ -10,9 +10,15 @@ import subprocess
 import asyncio
 import aiosqlite
 from concurrent.futures import ThreadPoolExecutor
+import time
+import sys
+import platform
+import os
+
+sys.stdout.reconfigure(line_buffering=True)
 
 # MQTT Configuration
-BROKER = '172.20.10.4'
+BROKER = os.getenv("MQTT_BROKER", "localhost")
 PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 DB_NAME = 'edge_cluster.db'
@@ -159,7 +165,8 @@ def get_system_status():
         }
         
         # Disk usage
-        disk_usage = shutil.disk_usage("C:\\")  # Windows C: drive
+        mount = "C:\\" if platform.system() == "Windows" else "/"
+        disk_usage = shutil.disk_usage(mount)
         disk_info = {
             "total": disk_usage.total,
             "used": disk_usage.used,
@@ -378,7 +385,7 @@ def publish(client, topic, message):
     if status == 0:
         print(f"Send `{message[0:100]}` to topic `{topic[0:100]}`")
     else:
-        print(f"Failed to send message to topic {topic}")
+        print(f"Failed to send message to topic {topic} : {result}")
 
 def on_message(client, userdata, msg):
     """Handle incoming MQTT messages by scheduling async handler"""
