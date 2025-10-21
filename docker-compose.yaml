@@ -9,26 +9,26 @@ services:
   edge_auth:
     build:
       context: ./edge-cluster
-      dockerfile: dockerfile
-    container_name: edge_cluster
+      dockerfile: dockerfile_auth
+    container_name: edge_auth
     network_mode: "host"
     depends_on:
       broker:
         condition: service_started
     environment:
-      - MQTT_BROKER=localhost
+      - MQTT_BROKER=10.182.159.43
     healthcheck:
       test: ["CMD", "sh", "-c", "[ -f /app/cloud/signature/id_server.keys ]"]
-      interval: 1m30s
-      timeout: 30s
+      interval: 5s
+      timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 5s
 
   edge:
     build:
       context: ./edge-cluster
-      dockerfile: dockerfile_auth
-    container_name: edge_auth
+      dockerfile: dockerfile
+    container_name: edge_cluster
     network_mode: "host"
     depends_on:
       broker:
@@ -36,4 +36,4 @@ services:
       edge_auth:
         condition: service_healthy
     environment:
-      - MQTT_BROKER=localhost
+      - MQTT_BROKER=10.182.159.43
