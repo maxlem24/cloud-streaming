@@ -460,7 +460,7 @@ async def handle_message(client, msg):
                 await db_remove_video(live_id)
                 print("suppression de la vidéo")
             try:
-                chunk=message_json["chunk"]
+                chunk=message_json["chunk"].trim()
                 chunk_part=message_json["chunk_part"]
                 print("chunk reçu:",chunk_part)
                 if(chiffrement_init):
