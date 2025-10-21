@@ -7,13 +7,14 @@ from supabase import create_client, Client
 import jwt
 import subprocess
 import requests
+import os
 
 url: str = "https://ipbcjhqfquwyitrxnemq.supabase.co/"
 key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwYmNqaHFmcXV3eWl0cnhuZW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0MTY4NzcsImV4cCI6MjA3NTk5Mjg3N30.rk6zV-GfcClHuykQ4QJ7fURztFy9JlQBP84V_u3I8rw"
 supabase: Client = create_client(url, key)
 
 # MQTT Configuration
-BROKER = '172.20.10.4'
+BROKER = os.getenv("MQTT_BROKER", "localhost")
 PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 TOPIC_ID = f"auth/user/{EDGE_ID}/"

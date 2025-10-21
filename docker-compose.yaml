@@ -1,18 +1,39 @@
-services: 
-
+services:
   broker:
     image: eclipse-mosquitto:latest
     container_name: mqtt_broker
     network_mode: host
     volumes:
       - ./edge-cluster/mosquitto.conf:/mosquitto/config/mosquitto.conf
-    
 
-  edge:
-    build: ./edge-cluster
+  edge_auth:
+    build:
+      context: ./edge-cluster
+      dockerfile: dockerfile
     container_name: edge_cluster
     network_mode: "host"
     depends_on:
-      - broker
+      broker:
+        condition: service_started
+    environment:
+      - MQTT_BROKER=localhost
+    healthcheck:
+      test: ["CMD", "sh", "-c", "[ -f /app/cloud/signature/id_server.keys ]"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  edge:
+    build:
+      context: ./edge-cluster
+      dockerfile: dockerfile_auth
+    container_name: edge_auth
+    network_mode: "host"
+    depends_on:
+      broker:
+        condition: service_started
+      edge_auth:
+        condition: service_healthy
     environment:
       - MQTT_BROKER=localhost
