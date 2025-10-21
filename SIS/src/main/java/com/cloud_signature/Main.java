@@ -305,7 +305,6 @@ public class Main {
             default:
                 System.err.println(
                         "Usage:\n" +
-
                                 "owner init <identity> <base64_keys>\n" +
                                 "owner sign <chemin/du/fichier>");
                 return;

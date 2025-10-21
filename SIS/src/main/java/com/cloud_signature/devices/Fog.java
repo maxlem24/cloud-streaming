@@ -65,8 +65,8 @@ public class Fog implements Serializable {
         return w_1_prime.isEqual(signed_data.getSign().getW_1());
     }
 
-    public Signed_Data_Delegated[] delegated_sign(byte[] data) throws NoSuchAlgorithmException, NoDelegationException {
-        long timestamp = new Date().getTime();
+    public Signed_Data_Delegated[] delegated_sign(byte[] data, long data_id)
+            throws NoSuchAlgorithmException, NoDelegationException {
         if (delegated_keys == null || delegatedOwner == null) {
             throw new NoDelegationException();
         }
@@ -91,7 +91,7 @@ public class Fog implements Serializable {
         byte[][] splited_data = Globals.split_data(data);
 
         for (int i = 0; i < Globals.n; i++) {
-            signed_data_tab[i] = new Signed_Data_Delegated(timestamp, seed, delegatedOwner.getId_w(), v, sign,
+            signed_data_tab[i] = new Signed_Data_Delegated(data_id, seed, delegatedOwner.getId_w(), v, sign,
                     splited_data[i], i,
                     delegatedOwner.getP_k(), id_d,
                     delegated_keys.getPk_d());
@@ -124,6 +124,5 @@ public class Fog implements Serializable {
         this.id_d = decoder.decode(parts[0]);
         this.pk_s = Globals.pk_sFromString(parts[1]);
     }
-
 
 }

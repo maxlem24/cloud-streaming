@@ -9,10 +9,10 @@ public class Signed_Data_Delegated extends Signed_Data {
     private byte[] id_d;
     private Element pk_d;
 
-    public Signed_Data_Delegated(long timestamp, Gen_seed paramA, byte[] id_w, SimpleMatrix v, Signature sign,
+    public Signed_Data_Delegated(long data_id, Gen_seed paramA, byte[] id_w, SimpleMatrix v, Signature sign,
             byte[] d_i, int i,
             Element pk_v, byte[] id_d, Element pk_d) {
-        super(timestamp, paramA, id_w, v, sign, d_i, i, pk_v);
+        super(data_id, paramA, id_w, v, sign, d_i, i, pk_v);
         this.id_d = id_d;
         this.pk_d = pk_d;
     }
