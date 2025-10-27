@@ -18,33 +18,72 @@ import java.util.Date;
 import java.util.Base64.Encoder;
 import java.util.Base64.Decoder;
 
-// Propriétaire de données qui peut signer des données et créer des clés de délégation pour les noeuds du fog
+/***
+ * Propriétaire de la donnée, qui effectue une signature de sa donnée, et peut donner des droits pour déléguer la signature.
+ */
 public class Owner {
     private KeyPair keys;
     private byte[] id_w;
 
+    /**
+     * Initialisation du streamer dans un même programme
+     * 
+     * @param server la variable du serveur d'authentification
+     * @param id_w   l'identité du streamer
+     * @throws NoSuchAlgorithmException
+     */
     public Owner(IdentificationServer server, byte[] id_w) throws NoSuchAlgorithmException {
         this.id_w = id_w;
         this.keys = server.verify_identity(id_w);
     }
 
+    /**
+     * Initialisation du streamer a partir de sa clé privée, de la clé publique de
+     * la zone et de son identité
+     * 
+     * @param keys l'ensemble clé privée et clé publique de la zone
+     * @param id_w l'identité du streamer
+     * @throws NoSuchAlgorithmException
+     */
     public Owner(KeyPair keys, byte[] id_w) throws NoSuchAlgorithmException {
         this.id_w = id_w;
         this.keys = keys;
     }
 
+    /**
+     * Connection à une nouvelle zone
+     * 
+     * @param new_server le serveur de la nouvelle zone
+     * @throws NoSuchAlgorithmException
+     */
     public void connect_new_IS(IdentificationServer new_server) throws NoSuchAlgorithmException {
         KeyPair new_keys = new_server.verify_identity(id_w);
         this.keys.add(new_keys);
     }
 
-    public DelegationKeyPair create_delegation(byte[] id_d) throws NoSuchAlgorithmException {
+    /**
+     * Calcul de la clé délégué d'un serveur fog
+     * 
+     * @param id_d l'identité du serveur fog
+     * @return la clé publique du fog et la clé de délégation
+     * @throws NoSuchAlgorithmException
+     */
+    public DelegationKeyPair delegateSign(byte[] id_d) throws NoSuchAlgorithmException {
         Element y = Globals.pairing.getZr().newRandomElement();
         Element pk_d = Globals.p.duplicate().mulZn(y);
         Element dk_d = keys.getS_w().duplicate().add(Globals.h1(id_d).mulZn(y));
         return new DelegationKeyPair(dk_d, pk_d);
     }
 
+    /**
+     * Implémentation de la signature
+     * 
+     * @param data    la donnée à signer
+     * @param data_id l'id de la donnée, utilisée pour identifier la donnée après
+     *                signature
+     * @return un tableau contenant les différents morceaux de la signature
+     * @throws NoSuchAlgorithmException
+     */
     public Signed_Data[] share_data(byte[] data, long data_id) throws NoSuchAlgorithmException {
         Gen_seed seed = new Gen_seed();
         SimpleMatrix v = Globals.calcV(seed, data);
@@ -73,10 +112,18 @@ public class Owner {
 
     }
 
+    /**
+     * 
+     * @return l'identité du streamer
+     */
     public byte[] getId_w() {
         return id_w;
     }
 
+    /**
+     * 
+     * @return la clé publique de la zone
+     */
     public Element getP_k() {
         return keys.getP_k();
     }
@@ -90,6 +137,10 @@ public class Owner {
                 keys.toString());
     }
 
+    /**
+     * Initialisation du streamer à partir de sa représentation en base 64
+     * @param str la représentation en base 64
+     */
     public Owner(String str) {
         String[] parts = str.split("::");
 

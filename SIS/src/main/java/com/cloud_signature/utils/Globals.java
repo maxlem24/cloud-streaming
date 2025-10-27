@@ -18,6 +18,12 @@ import it.unisa.dia.gas.jpbc.PairingParameters;
 import it.unisa.dia.gas.plaf.jpbc.pairing.PairingFactory;
 import it.unisa.dia.gas.plaf.jpbc.pairing.parameters.PropertiesParameters;
 
+
+/***
+ * Ensemble des attributs globaux au programmme, tels que la définition des courbes, les tailles des matrices et le générateur.
+ * 
+ * Egalement l'ensemble des fonctions de hashage et de calculs matriciels
+ */
 public class Globals {
     // public static Pairing pairing = PairingFactory.getPairing();
     public static int l = 64;
@@ -40,7 +46,7 @@ public class Globals {
         return PairingFactory.getPairing(props);
     }
 
-    public static Element p = pairing.getG1().newElementFromBytes("Clément et Maxime à 2h de mat".getBytes());
+    public static Element p = pairing.getG1().newElementFromBytes("Securite du Cloud - 2025".getBytes());
 
     public final static Element h1(byte[] data) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-512");

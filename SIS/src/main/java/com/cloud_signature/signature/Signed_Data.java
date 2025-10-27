@@ -11,9 +11,12 @@ import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Base64.Decoder;
 
-// Données signées contenant le message, la signature et tous les pautres aramètres pour la vérification
+/***
+ * Données signée, qui contiennent tous les éléments nécessaire à la
+ * vérification de la signature
+ */
 public class Signed_Data {
-    private long data_id; 
+    private long data_id;
     private Gen_seed paramA;
     private byte[] id_w;
     private SimpleMatrix v;
@@ -22,7 +25,8 @@ public class Signed_Data {
     private int i;
     private Element pk_v;
 
-    public Signed_Data(long data_id, Gen_seed paramA, byte[] id_w, SimpleMatrix v, Signature sign, byte[] d_i, int i, Element pk_v) {
+    public Signed_Data(long data_id, Gen_seed paramA, byte[] id_w, SimpleMatrix v, Signature sign, byte[] d_i, int i,
+            Element pk_v) {
         this.data_id = data_id;
         this.paramA = paramA;
         this.id_w = id_w;

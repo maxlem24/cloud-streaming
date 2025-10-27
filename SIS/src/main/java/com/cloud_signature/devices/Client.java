@@ -13,12 +13,22 @@ import com.cloud_signature.utils.Globals;
 import it.unisa.dia.gas.jpbc.Element;
 import it.unisa.dia.gas.jpbc.Pairing;
 
-// Client final qui vérifie l'authenticité des données signées (avec ou sans délégation)
+/***
+ * Client qui vérifie la donnée et la rassemble pour l'utiliser
+ */
 public class Client {
 
     public Client() {
     }
 
+    /***
+     * Implémentation de la vérification de la signature selon le SIS
+     * 
+     * @param signed_data La structure contenant la signature ainsi que tous les
+     *                    paramètres nécessaires à la vérification
+     * @return si la signature est valide
+     * @throws NoSuchAlgorithmException
+     */
     public boolean verify_signature(Signed_Data signed_data) throws NoSuchAlgorithmException {
         SimpleMatrix v_i = Globals.calcVi(signed_data.getParamA(), signed_data.getD_i());
         SimpleMatrix v_prime = signed_data.getV();
@@ -41,6 +51,14 @@ public class Client {
         return w_1_prime.isEqual(signed_data.getSign().getW_1());
     }
 
+    /***
+     * Implémentation de la vérification de signature déléguée selon le SIS
+     * 
+     * @param signed_data La structure contenant la signature déléguée ainsi que
+     *                    tous les paramètres nécessaires à la vérification
+     * @return si la signature est valide
+     * @throws NoSuchAlgorithmException
+     */
     public boolean verify_signature(Signed_Data_Delegated signed_data) throws NoSuchAlgorithmException {
         SimpleMatrix v_i = Globals.calcVi(signed_data.getParamA(), signed_data.getD_i());
         SimpleMatrix v_prime = signed_data.getV();

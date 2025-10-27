@@ -8,6 +8,9 @@ import com.cloud_signature.utils.Globals;
 
 import it.unisa.dia.gas.jpbc.Element;
 
+/***
+ * Signature, composée de w1 et de w2
+ */
 public class Signature {
     private Element w_1;
     private Element w_2;

@@ -10,9 +10,10 @@ import java.util.Base64.Decoder;
 
 import com.cloud_signature.utils.Globals;
 
-
-// Paire de clés secrète (s_w) et publique (p_k) basées sur une identité
-public class KeyPair implements Serializable {
+/***
+ * Clé privée liée à une identité et clé publique de la zone
+ */
+public class KeyPair {
     private Element s_w;
     private Element p_k;
 

@@ -10,8 +10,10 @@ import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Base64.Decoder;
 
-// Paire de clés de délégation permettant à un noeud du fog de signer à la place du propriétaire
-public class DelegationKeyPair implements Serializable {
+/***
+ * Ensemble clé publique du signataire délégué et clé de signature
+ */
+public class DelegationKeyPair {
     private Element dk_d;
     private Element pk_d;
 
@@ -32,17 +34,16 @@ public class DelegationKeyPair implements Serializable {
     public String toString() {
         Encoder encoder = Base64.getEncoder();
         return String.format(
-            "%s:%s", 
-            encoder.encodeToString(dk_d.toBytes()), 
-            encoder.encodeToString(pk_d.toBytes())
-        );
+                "%s:%s",
+                encoder.encodeToString(dk_d.toBytes()),
+                encoder.encodeToString(pk_d.toBytes()));
     }
 
     public DelegationKeyPair(String str) {
         String[] parts = str.split(":");
 
         Decoder decoder = Base64.getDecoder();
-        
+
         this.dk_d = Globals.pairing.getG1().newElementFromBytes(decoder.decode(parts[0]));
         this.pk_d = Globals.pairing.getG1().newElementFromBytes(decoder.decode(parts[1]));
     }

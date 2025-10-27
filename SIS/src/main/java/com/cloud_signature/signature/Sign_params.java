@@ -6,7 +6,11 @@ import com.cloud_signature.utils.Globals;
 
 import it.unisa.dia.gas.jpbc.Element;
 
-// Paramètres de signature qui incluent la matrice v, la seed et l'élément r utilisés pour la signature
+/***
+ * Paramètres utilisés dans la signature et qui prouve l'intégrité de la donnée.
+ * 
+ * Composé de la matrice V, de la graine du générateur aléatoire, et de l'élément de la courbe r
+ */
 public class Sign_params {
 
     private Gen_seed paramsA;

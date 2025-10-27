@@ -1,10 +1,19 @@
 package com.cloud_signature.signature;
 
+import java.util.Base64;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
+
 import org.ejml.simple.SimpleMatrix;
+
+import com.cloud_signature.utils.Globals;
 
 import it.unisa.dia.gas.jpbc.Element;
 
-// Données signées par délégation qui incluent en plus l'identité et la clé publique du propriétaire originel
+/***
+ * Données signée par délégation, qui contiennent tous les éléments nécessaire à
+ * la vérification de la signature
+ */
 public class Signed_Data_Delegated extends Signed_Data {
     private byte[] id_d;
     private Element pk_d;
@@ -27,6 +36,21 @@ public class Signed_Data_Delegated extends Signed_Data {
 
     @Override
     public String toString() {
-        return super.toString() + String.format("\nid_d = %s", new String(id_d));
+        Encoder encoder = Base64.getEncoder();
+
+        return String.format("%s::%s::%s",
+                super.toString(),
+                encoder.encodeToString(id_d),
+                encoder.encodeToString(pk_d.toBytes()));
     }
+
+    public Signed_Data_Delegated(String str) {
+        super(str); // Seules les 8 premieres parties vont être utilisées
+        String[] parts = str.split("::");
+        Decoder decoder = Base64.getDecoder();
+
+        this.id_d = decoder.decode(parts[8]);
+        this.pk_d = Globals.pairing.getG1().newElementFromBytes(decoder.decode(parts[9]));
+    }
+
 }

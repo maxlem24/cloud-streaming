@@ -8,8 +8,11 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.Base64.Encoder;
 
 import com.cloud_signature.devices.*;
+import com.cloud_signature.signature.DelegationKeyPair;
 import com.cloud_signature.signature.Gen_seed;
 import com.cloud_signature.signature.KeyPair;
 import com.cloud_signature.signature.NoDelegationException;
@@ -19,41 +22,12 @@ import com.cloud_signature.utils.Globals;
 
 public class Main {
 
+    /***
+     * Fonction permetant l'utilisation en ligne de commande
+     * 
+     * @param args les arguments permettant de définir le fonctionnement
+     */
     public static void main(String[] args) {
-        /*
-         * --mode=identification init
-         * --mode=identification pseudo:mdp
-         * 
-         * --mode=client verify_signature --signature="X"
-         * --data_file="chemin/du/fichier"
-         * 
-         * --mode=fog verify_signature --signature="X" --data_file="chemin/du/fichier"
-         * --mode=fog sign_data --data_file="chemin/du/fichier"
-         * --mode=fog delegate_keys --owner_pubkey="X"
-         * 
-         * --mode=owner sign_data --data_file="chemin/du/fichier"
-         * --mode=owner create_delegation --id=edge-id
-         */
-
-        // try {
-        // IdentificationServer s_1 = new IdentificationServer();
-        // Owner o_1 = new Owner(s_1, "maxlem24".getBytes());
-        // Signed_Data[] signed_data_array = o_1.share_data("Ceci est un
-        // stream".getBytes());
-
-        // Fog f_1 = new Fog(s_1, "Fog 1".getBytes());
-        // System.out.println(f_1.verify_signature(signed_data_array[0]));
-        // System.out.println(f_1.verify_signature(signed_data_array[2]));
-
-        // f_1.getDelegatedKeys(o_1);
-        // Signed_Data_Delegated[] signed_data_delegated_array = f_1
-        // .delegated_sign("Ceci est un stream delegue".getBytes());
-        // Client c_1 = new Client();
-        // System.out.println(c_1.verify_signature(signed_data_array[7]));
-        // System.out.println(c_1.verify_signature(signed_data_delegated_array[5]));
-        // } catch (NoSuchAlgorithmException | NoDelegationException e) {
-        // e.printStackTrace();
-        // }
 
         String mode = "";
         if (args.length != 0) {
@@ -84,29 +58,19 @@ public class Main {
             }
 
             default:
-                System.err.println(
-                        "Usage:\n" +
-                                "identification <identity>\n" +
-                                "client verify <signed_data>\n" +
-                                "client merge <chemin/du/fichier>" +
-                                "fog init <identity> <server_keys>\n" +
-                                "fog verify <signed_data>\n" +
-                                "fog verify -f <chemin/du/fichier>\n" +
-                                // "fog sign_data <chemin/du/fichier>\n" +
-                                // "fog delegate_keys <owner_pubkey>\n" +
-                                "owner init <identity> <base64_keys>\n" +
-                                "owner sign <chemin/du/fichier> <data_id>"
-                // "owner create_delegation <edge-id>"
-                );
+                showUsage();
                 return;
         }
 
     }
 
+    /**
+     * Ensemble des fonctions liées à l'identification
+     * @param args les arguments nécessaires au bon fonctionnement
+     */
     public static void identification(String[] args) {
         if (args.length != 2) {
-            System.err.println("Usage:\n" +
-                    "identification <identity>");
+            showUsage("id");
             System.exit(1);
         }
 
@@ -146,11 +110,13 @@ public class Main {
         return;
     }
 
+    /**
+     * Ensemble des fonctions liées au client
+     * @param args les arguments nécessaires au bon fonctionnement
+     */
     public static void client(String[] args) {
         if (args.length < 3) {
-            System.err.println("Usage:\n" +
-                    "client verify <signed_data>\n" +
-                    "client merge <chemin du fichier>");
+            showUsage("client");
             System.exit(1);
         }
         String action = args[1];
@@ -174,11 +140,12 @@ public class Main {
                                 ? signed_data.getData_id() + " " + signed_data.getI()
                                 : "X");
                     } else if (length == 10) {
-                        // TODO
-                        System.err.println("Vérification de signature déléguée non implémentée");
-                        System.exit(1);
+                        Signed_Data_Delegated signed_data = new Signed_Data_Delegated(signature);
+                        System.out.println(client.verify_signature(signed_data)
+                                ? signed_data.getData_id() + " " + signed_data.getI()
+                                : "X");
                     } else {
-                        System.err.println("Signature invalide");
+                        System.out.println("X");
                         System.exit(1);
                     }
                 } catch (Exception e) {
@@ -218,24 +185,19 @@ public class Main {
                 }
                 break;
             default:
-                System.err.println(
-                        "Usage:\n" +
-                                "client verify <signed_data>\n" +
-                                "client merge <chemin du fichier>"
-                // "owner create_delegation <edge-id>"
-                );
+                showUsage("client");
                 return;
         }
 
     }
 
+    /**
+     * Ensemble des fonctions liées au streamer
+     * @param args les arguments nécessaires au bon fonctionnement
+     */
     public static void owner(String[] args) {
         if (args.length < 3) {
-            System.err.println("Usage:\n" +
-                    "owner init <identity> <base64_keys>\n" +
-                    "owner sign <chemin/du/fichier> <data_id>"
-            // "owner create_delegation <edge-id>"
-            );
+            showUsage("owner");
             System.exit(1);
         }
 
@@ -287,8 +249,6 @@ public class Main {
                     Signed_Data[] signed_data_tab = owner.share_data(data, data_id);
                     for (Signed_Data sd : signed_data_tab) {
                         System.out.println(sd);
-                        // System.out.println(sd.toString().equals(new
-                        // Signed_Data(sd.toString()).toString()));
                     }
 
                 } catch (Exception e) {
@@ -298,25 +258,46 @@ public class Main {
 
                 return;
             }
-            case "create_delegation":
-                System.out.println("Va voir ailleurs si j'y suis :eyes:");
-                System.exit(0xBEEF);
+            case "delegate":
+                if (args.length != 3) {
+                    System.err.println("Usage:\n" +
+                            "owner delegate <edge_id>");
+                    System.exit(1);
+                }
+
+                try {
+                    String str = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+                    owner = new Owner(str);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+                String edgeID = args[2];
+                try {
+                    DelegationKeyPair delegatekeys = owner.delegateSign(edgeID.getBytes());
+                    Encoder encoder = Base64.getEncoder();
+                    System.out.printf("%s::%s\n",
+                            delegatekeys.toString(),
+                            encoder.encodeToString(owner.getId_w()));
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
                 return;
             default:
-                System.err.println(
-                        "Usage:\n" +
-                                "owner init <identity> <base64_keys>\n" +
-                                "owner sign <chemin/du/fichier>");
+                showUsage("owner");
                 return;
         }
     }
 
+    /**
+     * Ensemble des fonctions liées au noeud de données
+     * @param args les arguments nécessaires au bon fonctionnement
+     */
     public static void fog(String[] args) {
         if (args.length < 3) {
-            System.err.println("Usage:\n" +
-                    "fog init <identity> <server_keys>\n" +
-                    "fog verify <signed_data>\n" +
-                    "fog verify -f <chemin/du/fichier>");
+            showUsage("fog");
             System.exit(1);
         }
 
@@ -324,7 +305,7 @@ public class Main {
         file.getParentFile().mkdirs();
 
         String action = args[1];
-        Fog fog;
+        Fog fog = null;
 
         switch (action) {
             case "init": {
@@ -370,10 +351,12 @@ public class Main {
                                         ? signed_data.getData_id() + " " + signed_data.getI()
                                         : "X");
                             } else if (length == 10) {
-                                // TODO
-                                System.err.println("Vérification de signature déléguée non implémentée");
-                                System.exit(1);
+                                Signed_Data_Delegated signed_data = new Signed_Data_Delegated(signature.trim());
+                                System.out.println(fog.verify_signature(signed_data)
+                                        ? signed_data.getData_id() + " " + signed_data.getI()
+                                        : "X");
                             } else {
+                                System.out.println("X");
                                 System.err.println("Signature invalide");
                                 System.exit(1);
                             }
@@ -397,35 +380,90 @@ public class Main {
                         fog = new Fog(str);
                         int length = signature.split("::").length;
                         if (length == 8) {
-                            Signed_Data signed_data = new Signed_Data(signature);
+                            Signed_Data signed_data = new Signed_Data(signature.trim());
                             System.out.println(fog.verify_signature(signed_data)
                                     ? signed_data.getData_id() + " " + signed_data.getI()
                                     : "X");
                         } else if (length == 10) {
-                            // TODO
-                            System.err.println("Vérification de signature déléguée non implémentée");
-                            System.exit(1);
+                            Signed_Data_Delegated signed_data = new Signed_Data_Delegated(signature.trim());
+                            System.out.println(fog.verify_signature(signed_data)
+                                    ? signed_data.getData_id() + " " + signed_data.getI()
+                                    : "X");
                         } else {
+                            System.out.println("X");
                             System.err.println("Signature invalide");
                             System.exit(1);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
+                        System.exit(1);
                     }
                 }
 
                 return;
 
+            case "delegate":
+                if (args.length != 3) {
+                    System.err.println("Usage:\n" +
+                            "fog delegate <base64_keys>");
+                    System.exit(1);
+                }
+                String keys = args[2];
+                try {
+                    String str = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+                    fog = new Fog(str);
+                    fog.addDelegation(keys.trim());
+                    PrintWriter out = new PrintWriter(file);
+                    out.print(fog);
+                    out.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+                return;
+            case "sign":
+                if (args.length != 4) {
+                    System.err.println("Usage:\n" +
+                            "fog sign <chemin/du/fichier> <data_id>");
+                    System.exit(1);
+                }
+                try {
+                    String str = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+                    fog = new Fog(str);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+
+                try {
+                    String file_path = args[2];
+                    long data_id = Long.parseLong(args[3]);
+                    File data_file = new File(file_path);
+                    byte[] data = Files.readAllBytes(data_file.toPath());
+
+                    Signed_Data[] signed_data_tab = fog.delegated_sign(data, data_id);
+                    for (Signed_Data sd : signed_data_tab) {
+                        System.out.println(sd);
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+
+                return;
+
             default:
-                System.err.println(
-                        "Usage:\n" +
-                                "fog init <identity> <server_keys>\n" +
-                                "fog verify <signature>\n" +
-                                "fog verify -f <chemin/du/fichier>");
+                showUsage("fog");
                 return;
         }
     }
 
+    /***
+     * Générateur de nom de fichier aléatoire, utilisé pour le stockage temporaire des fichiers
+     * @param length la taille du nom
+     * @return une chaine de caractère aléatoire de taile `length`
+     */
     public static String randomChars(int length) {
         StringBuilder sb = new StringBuilder();
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -436,4 +474,56 @@ public class Main {
         return sb.toString();
     }
 
+    public static void showUsage() {
+        System.err.println(
+                "Usage:\n" +
+                        "identification <identity>\n" +
+                        "client verify <signed_data>\n" +
+                        "client merge <chemin/du/fichier>" +
+                        "fog init <identity> <server_keys>\n" +
+                        "fog verify <signed_data>\n" +
+                        "fog verify -f <chemin/du/fichier>\n" +
+                        "fog sign <chemin/du/fichier> <data_id>\n" +
+                        "fog delegate <base64_keys>\n" +
+                        "owner init <identity> <base64_keys>\n" +
+                        "owner sign <chemin/du/fichier> <data_id>\n" +
+                        "owner delegate <edge_id>");
+    }
+
+    public static void showUsage(String mode) {
+        switch (mode) {
+            case "id":
+            case "identification":
+                System.err.println(
+                        "Usage:\n" +
+                                "identification <identity>");
+                break;
+            case "fog":
+                System.err.println(
+                        "Usage:\n" +
+                                "fog init <identity> <server_keys>\n" +
+                                "fog verify <signed_data>\n" +
+                                "fog verify -f <chemin/du/fichier>\n" +
+                                "fog sign <chemin/du/fichier> <data_id>\n" +
+                                "fog delegate <base64_keys>");
+                break;
+            case "client":
+                System.err.println(
+                        "Usage:\n" +
+                                "client verify <signed_data>\n" +
+                                "client merge <chemin/du/fichier>");
+                break;
+            case "owner":
+                System.err.println(
+                        "Usage:\n" +
+                                "owner init <identity> <base64_keys>\n" +
+                                "owner sign <chemin/du/fichier> <data_id>\n" +
+                                "owner delegate <edge_id>");
+                break;
+            default:
+                showUsage();
+                break;
+        }
+
+    }
 }
