@@ -1,2 +1,0 @@
-# Communication
-### Tristan, Alban, Elouan
