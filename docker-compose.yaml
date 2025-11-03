@@ -4,7 +4,7 @@ services:
     container_name: mqtt_broker
     network_mode: host
     volumes:
-      - ./edge-cluster/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
   edge_auth:
     build:
