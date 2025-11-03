@@ -1,0 +1,16 @@
+FROM python:3.13.9-alpine3.22
+
+RUN apk add --no-cache openjdk21
+RUN apk add gcc python3-dev musl-dev linux-headers
+
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+WORKDIR /app/cloud
+
+COPY . /app/cloud
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Commande par défaut
+CMD ["python", "auth_edge.py"]

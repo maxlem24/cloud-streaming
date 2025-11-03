@@ -1,0 +1,5 @@
+paho-mqtt==2.1.0
+psutil==7.1.0
+aiosqlite>=0.17.0
+supabase>=2.21.1
+requests>=2.32.5
