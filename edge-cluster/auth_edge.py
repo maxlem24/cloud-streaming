@@ -4,9 +4,8 @@ import json
 from paho.mqtt import client as mqtt_client
 import uuid
 from supabase import create_client, Client
-import jwt
 import subprocess
-import requests
+
 import os
 
 url: str = "https://ipbcjhqfquwyitrxnemq.supabase.co/"
@@ -17,14 +16,21 @@ supabase: Client = create_client(url, key)
 BROKER = os.getenv("MQTT_BROKER", "localhost")
 PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
-TOPIC_ID = f"auth/user/{EDGE_ID}/"
 DB_NAME = 'edge_cluster.db'
 
 JAR_PATH = "cloud_signature-1.0-SNAPSHOT-jar-with-dependencies.jar"  # chemin vers votre jar (ajustez si besoin)
 
 
 def run_jar(args: list, timeout: int = 10) -> str | None:
-    """Run java -jar <JAR_PATH> <args...> and return stdout (str) or None on error."""
+    """Lancer le JAR avec des arguments spécifiques.
+
+    Args:
+        args (list): Les arguments à passer au JAR sous forme de liste.
+        timeout (int): Le délai d'attente en secondes (10 par défaut).
+
+    Returns:
+        str | None: La sortie standard du JAR sous forme de chaîne, ou None en cas d'échec.
+    """
     cmd = ["java", "-jar", JAR_PATH] + args
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
@@ -36,8 +42,12 @@ def run_jar(args: list, timeout: int = 10) -> str | None:
         print(f"failed to run jar: {e}")
         return None
 
-def connect_mqtt():
-    """Connect to MQTT broker"""
+def connect_mqtt() -> mqtt_client.Client:
+    """Se connecter au broker MQTT.
+    
+    Returns:
+        mqtt_client.Client: Le client MQTT connecté.
+    """
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
             print("Connected to MQTT Broker!")
@@ -49,8 +59,17 @@ def connect_mqtt():
     client.connect(BROKER, PORT)
     return client
 
-def publish(client, topic, message):
-    """Publish messages to MQTT topic"""
+def publish(client: mqtt_client.Client, topic: str, message: str) -> None:
+    """Publier des messages sur un topic MQTT.
+    
+    Args:
+        client (mqtt_client.Client): Le client MQTT.
+        topic (str): Le topic sur lequel publier.
+        message (str): Le message à publier.
+    
+    Returns:
+        None
+    """
     result = client.publish(topic, message)
     status = result[0]
     if status == 0:
@@ -59,7 +78,16 @@ def publish(client, topic, message):
         print(f"Failed to send message to topic {topic}")
 
 
-def subscribe(client: mqtt_client, topic: str):
+def subscribe(client: mqtt_client.Client, topic: str) -> None:
+    """S'abonner à un topic MQTT et gérer les messages entrants.
+    
+    Args:
+        client (mqtt_client.Client): Le client MQTT.
+        topic (str): Le topic auquel s'abonner.
+    
+    Returns:
+        None
+    """
     def on_message(client, userdata, msg):
         print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
         if (msg.topic=="auth/zone"):
@@ -93,9 +121,12 @@ def subscribe(client: mqtt_client, topic: str):
     client.on_message = on_message
 
 
-def run():
-    """Main function to run MQTT client"""
-
+def run() -> None:
+    """Fonction principale pour exécuter le client MQTT.
+    
+    Returns:
+        None
+    """
     client = connect_mqtt()
     subscribe(client, "auth/zone")  
     subscribe(client, "auth/user")  
