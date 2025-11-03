@@ -15,8 +15,7 @@ services:
     depends_on:
       broker:
         condition: service_started
-    environment:
-      - MQTT_BROKER=10.182.159.43
+    env_file: "./edge-cluster/.env"
     healthcheck:
       test: ["CMD", "sh", "-c", "[ -f /app/cloud/signature/id_server.keys ]"]
       interval: 5s
@@ -29,11 +28,10 @@ services:
       context: ./edge-cluster
       dockerfile: dockerfile
     container_name: edge_cluster
+    env_file: "./edge-cluster/.env"
     network_mode: "host"
     depends_on:
       broker:
         condition: service_started
       edge_auth:
         condition: service_healthy
-    environment:
-      - MQTT_BROKER=10.182.159.43
