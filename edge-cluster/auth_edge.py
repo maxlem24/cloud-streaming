@@ -1,25 +1,21 @@
-
-
 import json
 from paho.mqtt import client as mqtt_client
 import uuid
-from supabase import create_client, Client
+from supabase import create_client
 import subprocess
-
 import os
-
-url: str = "https://ipbcjhqfquwyitrxnemq.supabase.co/"
-key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwYmNqaHFmcXV3eWl0cnhuZW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0MTY4NzcsImV4cCI6MjA3NTk5Mjg3N30.rk6zV-GfcClHuykQ4QJ7fURztFy9JlQBP84V_u3I8rw"
-supabase: Client = create_client(url, key)
 
 # MQTT Configuration
 BROKER = os.getenv("MQTT_BROKER", "localhost")
 PORT = 1883
 EDGE_ID = str(uuid.uuid4())  # Unique ID for this edge cluster
 DB_NAME = 'edge_cluster.db'
-
 JAR_PATH = "cloud_signature-1.0-SNAPSHOT-jar-with-dependencies.jar"  # chemin vers votre jar (ajustez si besoin)
 
+# Supabase configuration
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def run_jar(args: list, timeout: int = 10) -> str | None:
     """Lancer le JAR avec des arguments spécifiques.
@@ -35,11 +31,11 @@ def run_jar(args: list, timeout: int = 10) -> str | None:
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
         if proc.returncode != 0:
-            print(f"jar error rc={proc.returncode} stderr={proc.stderr.strip()}")
+            print(f"Erreur du jar rc={proc.returncode} stderr={proc.stderr.strip()}")
             return None
         return proc.stdout.strip()
     except Exception as e:
-        print(f"failed to run jar: {e}")
+        print(f"Erreur lors de l'exécution du jar: {e}")
         return None
 
 def connect_mqtt() -> mqtt_client.Client:
@@ -56,8 +52,17 @@ def connect_mqtt() -> mqtt_client.Client:
 
     client = mqtt_client.Client()
     client.on_connect = on_connect
+    client.on_message = message_handler
+
+    subscribe_to_topics(client)
+
     client.connect(BROKER, PORT)
     return client
+
+def subscribe_to_topics(client):
+    client.subscribe("auth/zone")
+    client.subscribe("auth/user")
+    print("Tous les topics souscrits")
 
 def publish(client: mqtt_client.Client, topic: str, message: str) -> None:
     """Publier des messages sur un topic MQTT.
@@ -73,53 +78,67 @@ def publish(client: mqtt_client.Client, topic: str, message: str) -> None:
     result = client.publish(topic, message)
     status = result[0]
     if status == 0:
-        print(f"Send `{message}` to topic `{topic}`")
+        print(f"Message `{message}` envoyé au topic `{topic}`")
     else:
-        print(f"Failed to send message to topic {topic}")
+        print(f"Erreur lors de l'envoi du message à {topic}")
 
-
-def subscribe(client: mqtt_client.Client, topic: str) -> None:
-    """S'abonner à un topic MQTT et gérer les messages entrants.
+def handle_auth_zone(client: mqtt_client.Client, msg) -> None:
+    """Traiter l'authentification de la zone.
     
     Args:
         client (mqtt_client.Client): Le client MQTT.
-        topic (str): Le topic auquel s'abonner.
+        msg: Le message reçu.
     
     Returns:
         None
     """
-    def on_message(client, userdata, msg):
-        print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
-        if (msg.topic=="auth/zone"):
-            # on reçoi : ID
-            message_json=json.loads(msg.payload.decode())
-            client_id=message_json["ID"]
-            #récupérer les paramètres de la zone
-            code=run_jar(["id",client_id])
-            msg_a_envoyer={"parametre":code,"status":"ok"}
-            message_json=json.dumps(msg_a_envoyer)
-            publish(client,f"auth/zone/{client_id}", message_json)
-        if (msg.topic=="auth/user"):
-            message_json=json.loads(msg.payload.decode())
-            jwt=message_json["ownerId"]
-            try:    
-                response = supabase.auth.get_claims(jwt)
-                client_id=response["claims"]["sub"]
-                code=run_jar(["identification",client_id])
-                msg_a_envoyer={"status":"ok","ownerbase64":code}
-                publish(client,f"auth/user/{client_id}", json.dumps(msg_a_envoyer))
-            except Exception as e:
-                print(e)
-    
-    client.subscribe(topic)
-    print(f"On est souscrit au topic {topic}")
-    client.on_message = on_message
-            
-        
-    client.subscribe(topic)
-    print(f"On est souscrit au topic {topic}")
-    client.on_message = on_message
+    message_json = json.loads(msg.payload.decode())
+    client_id = message_json["ID"]
+    code = run_jar(["id", client_id])
+    msg_a_envoyer = {"parametre": code, "status": "ok"}
+    message_json = json.dumps(msg_a_envoyer)
+    publish(client, f"auth/zone/{client_id}", message_json)
 
+def handle_auth_user(client: mqtt_client.Client, msg) -> None:
+    """Traiter l'authentification de l'utilisateur.
+    
+    Args:
+        client (mqtt_client.Client): Le client MQTT.
+        msg: Le message reçu.
+    
+    Returns:
+        None
+    """
+    message_json = json.loads(msg.payload.decode())
+    jwt = message_json["ownerId"]
+    
+    try:
+        response = supabase.auth.get_claims(jwt)
+        client_id = response["claims"]["sub"]
+        code = run_jar(["identification", client_id])
+        msg_a_envoyer = {"status": "ok", "ownerbase64": code}
+        publish(client, f"auth/user/{client_id}", json.dumps(msg_a_envoyer))
+    except Exception as e:
+        print(f"Erreur lors de l'authentification de l'utilisateur: {e}")
+
+def message_handler(client: mqtt_client.Client, userdata, msg) -> None:
+    """Gérer les messages MQTT entrants.
+    
+    Args:
+        client (mqtt_client.Client): Le client MQTT.
+        userdata: Les données utilisateur.
+        msg: Le message reçu.
+    
+    Returns:
+        None
+    """
+    print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+    
+    if msg.topic == "auth/zone":
+        handle_auth_zone(client, msg)
+    
+    elif msg.topic == "auth/user":
+        handle_auth_user(client, msg)
 
 def run() -> None:
     """Fonction principale pour exécuter le client MQTT.
@@ -128,11 +147,7 @@ def run() -> None:
         None
     """
     client = connect_mqtt()
-    subscribe(client, "auth/zone")  
-    subscribe(client, "auth/user")  
-    
     print(f"Edge Cluster ID: {EDGE_ID}")
-
     client.loop_forever()
 
 if __name__ == '__main__':
